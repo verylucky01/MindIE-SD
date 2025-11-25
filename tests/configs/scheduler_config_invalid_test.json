@@ -1,0 +1,5 @@
+{
+    "num_timesteps": 30,
+    "num_sampling_steps": 1000,
+    "sample_method": "UNIFORM_CONSTANT"
+}
