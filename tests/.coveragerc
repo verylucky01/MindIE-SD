@@ -1,0 +1,9 @@
+[run]
+source = ../mindiesd
+omit =
+    */__init__.py
+
+[report]
+exclude_lines =
+    raise NotImplementedError
+    if __name__ == "__main__":

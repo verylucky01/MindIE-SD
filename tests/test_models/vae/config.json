@@ -1,0 +1,35 @@
+{
+    "architectures": [
+        "VideoAutoencoder"
+    ],
+    "cal_loss": false,
+    "freeze_vae_2d": false,
+    "from_pretrained": null,
+    "micro_frame_size": 17,
+    "model_type": "VideoAutoencoder",
+    "scale": [
+        3.85,
+        2.32,
+        2.33,
+        3.06
+    ],
+    "shift": [
+        -0.1,
+        0.34,
+        0.27,
+        0.98
+    ],
+    "torch_dtype": "float32",
+    "transformers_version": "4.36.2",
+    "vae_2d": {
+        "from_pretrained": "PixArt-alpha/pixart_sigma_sdxlvae_T5_diffusers",
+        "local_files_only": false,
+        "micro_batch_size": 4,
+        "subfolder": "vae",
+        "type": "VideoAutoencoderKL"
+    },
+    "vae_temporal": {
+        "from_pretrained": null,
+        "type": "VAE_Temporal_SD"
+    }
+}
