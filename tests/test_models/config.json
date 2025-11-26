@@ -1,0 +1,6 @@
+{
+    "dimension": 1280,
+    "num_heads": 16,
+    "qkv_bias": false,
+    "qk_norm": false
+}
