@@ -1,0 +1,6 @@
+{
+  "_class_name": "RFlowScheduler",
+  "_mindiesd_version": "1.0.0",
+  "num_sampling_steps": 30,
+  "num_timesteps": 1000
+}
