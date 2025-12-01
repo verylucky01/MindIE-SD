@@ -37,18 +37,14 @@ class CacheAgent:
         # If start step[0,1,2,...] >= stpes_count(), not use cache
         if self._config.step_start >= self._config.steps_count or \
             self._config.step_end == self._config.step_start:
-            logger.debug(f"'step_start' >= 'steps_count' or 'step_end' == 'step_start', do not apply cache function.")
             return function(*args, **kwargs)
 
         # If start block[0,1,2,...] >= blocks_count(), not use cache
         if self._config.block_start >= self._config.blocks_count or \
             self._config.block_end == self._config.block_start:
-            logger.debug("'block_start' >= 'blocks_count' or 'block_end' == 'block_start', "
-                         "do not apply cache function.")
             return function(*args, **kwargs)
         
         if self._config.step_interval == 1:
-            logger.debug("'step_interval' is 1, do not apply cache function.")
             return function(*args, **kwargs)
 
         return self._cache_method.apply(function, *args, **kwargs)
@@ -80,3 +76,12 @@ class CacheAgent:
             if self._config.block_end >= self._config.blocks_count:
                 raise ConfigError(f"The 'block_end' must < 'blocks_count', "
                     f"but got {self._config.block_end} and {self._config.blocks_count}.")
+        if self._config.step_start >= self._config.steps_count or \
+            self._config.step_end == self._config.step_start:
+            logger.debug(f"'step_start' >= 'steps_count' or 'step_end' == 'step_start', do not apply cache function.")
+        if self._config.block_start >= self._config.blocks_count or \
+            self._config.block_end == self._config.block_start:
+            logger.debug("'block_start' >= 'blocks_count' or 'block_end' == 'block_start', "
+                         "do not apply cache function.")
+        if self._config.step_interval == 1:
+            logger.debug("'step_interval' is 1, do not apply cache function.")
