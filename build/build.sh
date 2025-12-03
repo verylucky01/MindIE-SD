@@ -13,36 +13,9 @@
 set -e
 BUILD_DIR=$(dirname $(readlink -f $0))
 PROJ_ROOT_DIR=${BUILD_DIR}/..
-export OUTPUT_DIR=$PROJ_ROOT_DIR/output
-
-if [ ! -d "$OUTPUT_DIR" ];then
-    mkdir -p $OUTPUT_DIR
-fi
-
-AFT_PATH=${PROJ_ROOT_DIR}
 chmod a-w $BUILD_DIR/*
 
-rm -rf ${PROJ_ROOT_DIR}/dist/*
 cd ${PROJ_ROOT_DIR}
-MindIESDVersion="1.0.RC1"
-if [ ! -f "${PROJ_ROOT_DIR}"/../CI/config/version.ini ]; then
-    echo "version.ini is not exsited !"
-else
-    MindIESDVersion=$(cat ${PROJ_ROOT_DIR}/../CI/config/version.ini | grep "PackageName" | cut -d "=" -f 2)
-fi
-MindIESDVersion=$(echo $MindIESDVersion | sed -E 's/([0-9]+)\.([0-9]+)\.RC([0-9]+)\.([0-9]+)/\1.\2rc\3.post\4/')
-MindIESDWheelVersion=$(echo $MindIESDVersion | sed -s 's!.T!.alpha!')
-MindIESDVersion=$(echo $MindIESDVersion | sed -s 's!.T!+t!')
-echo "MindIESDVersion $MindIESDVersion"
-echo "MindIESDWheelVersion $MindIESDWheelVersion"
-python3 ${PROJ_ROOT_DIR}/setup.py --setup_cmd='bdist_wheel' --version=${MindIESDWheelVersion}
-
-# "aarch64" / "x86_64"
-ARCH=$(uname -m)
-if [[ "${ARCH}" != "aarch64" && "${ARCH}" != "x86_64" ]]; then
-    echo "It is not system of aarch64 or x86_64"
-    exit 1
-fi
 
 PYTHON_VERSION=""
 if command -v python3 &> /dev/null; then
@@ -56,25 +29,37 @@ else
     exit 1
 fi
 
-rm -rf $OUTPUT_DIR/*
-mkdir -p $OUTPUT_DIR/Ascend-mindie-sd_${MindIESDVersion}_${PYTHON_VERSION}_linux_${ARCH}
-cp ${PROJ_ROOT_DIR}/dist/mindie*.whl ${OUTPUT_DIR}/Ascend-mindie-sd_${MindIESDVersion}_${PYTHON_VERSION}_linux_${ARCH}
-cp ${PROJ_ROOT_DIR}/requirements.txt ${OUTPUT_DIR}/Ascend-mindie-sd_${MindIESDVersion}_${PYTHON_VERSION}_linux_${ARCH}
-
-if [ -n "$AFT_PATH" ] && [ -d "$AFT_PATH" ]; then
-    export RELEASE_TMP_DIR=${OUTPUT_DIR}/Ascend-mindie-sd_${MindIESDVersion}_${PYTHON_VERSION}_linux_${ARCH}
-    source ${AFT_PATH}/build/build_ops.sh ${AFT_PATH}/build
-    SET_ENV_PATH=${OUTPUT_DIR}/Ascend-mindie-sd_${MindIESDVersion}_${PYTHON_VERSION}_linux_${ARCH}/set_env.sh
-    touch ${SET_ENV_PATH}
-    echo "path=\${BASH_SOURCE[0]}" >> ${SET_ENV_PATH}
-    echo "SD_OPS_HOME=\$(cd \$(dirname \$path); pwd )" >> ${SET_ENV_PATH}
-    echo "export ASCEND_CUSTOM_OPP_PATH=\${SD_OPS_HOME}/vendors/customize:\${ASCEND_CUSTOM_OPP_PATH}" >> ${SET_ENV_PATH}
-    echo "export ASCEND_CUSTOM_OPP_PATH=\${SD_OPS_HOME}/vendors/aie_ascendc:\${ASCEND_CUSTOM_OPP_PATH}" >> ${SET_ENV_PATH}
-elif [ -n "$AFT_PATH" ]; then
-    echo "Waring: The path of ascend-faster-transformer $AFT_PATH does not exist."
+if [ -n "$PROJ_ROOT_DIR" ] && [ -d "${PROJ_ROOT_DIR}/csrc/ops" ]; then
+    source ${PROJ_ROOT_DIR}/build/build_ops.sh ${PROJ_ROOT_DIR}/build
+elif [ -n "$PROJ_ROOT_DIR" ]; then
+    echo "Waring: The path of custom op operators $PROJ_ROOT_DIR/csrc/ops does not exist."
 fi
 
-cd $OUTPUT_DIR
-tar_package_name="Ascend-mindie-sd_${MindIESDVersion}_${PYTHON_VERSION}_linux_${ARCH}.tar.gz"
-tar czf $tar_package_name ./Ascend-mindie-sd_${MindIESDVersion}_${PYTHON_VERSION}_linux_${ARCH} --owner=0 --group=0
-rm -rf ./Ascend-mindie-sd_${MindIESDVersion}_${PYTHON_VERSION}_linux_${ARCH}
+if [ -n "$PROJ_ROOT_DIR" ] && [ -d "${PROJ_ROOT_DIR}/csrc/plugin" ]; then
+    source ${PROJ_ROOT_DIR}/build/build_plugin.sh ${PROJ_ROOT_DIR}/build
+elif [ -n "$PROJ_ROOT_DIR" ]; then
+    echo "Waring: The path of op plugins $PROJ_ROOT_DIR/csrc/plugin does not exist."
+fi
+
+clean_build_dirs() {
+    local dirs_to_remove=(
+        "${BUILD_DIR}/custom_project"
+        "${BUILD_DIR}/custom_project_tik"
+    )
+
+    echo "About to delete the following build-related directories: "
+    for dir in "${dirs_to_remove[@]}"; do
+        echo "  - $dir"
+    done
+    
+    for dir in "${dirs_to_remove[@]}"; do
+        if [[ -d "$dir" ]]; then
+            rm -rf "$dir"
+        else
+            echo "Directory does not exist, skipping: $dir"
+        fi
+    done
+}
+
+clean_build_dirs
+cd ${PROJ_ROOT_DIR}

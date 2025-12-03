@@ -36,7 +36,50 @@ if [ $? -ne 0 ]; then
 fi
 export USER_ABI_VERSION=$(echo "$USER_ABI_VERSION_RAW" | tr -d '[:space:]')
 
+
 rm -rf build
 mkdir -p build
 cmake -B build ../csrc
 cmake --build build -j
+
+copy_so_files() {
+    if [ $# -ne 2 ]; then
+        echo "Error: Please pass two arguments (source directory and target directory)"
+        return 1
+    fi
+
+    local src_dir="$1"
+    local dest_dir="$2"
+
+    if [ ! -d "$src_dir" ]; then
+        echo "Error: Source directory $src_dir does not exist or is not a valid directory"
+        return 1
+    fi
+
+    if [ ! -d "$dest_dir" ]; then
+        echo "Target directory '$dest_dir' does not exist, creating now..."
+        mkdir -p "$dest_dir" || {
+            echo "Error: Failed to create target directory $dest_dir"
+            return 1
+        }
+    fi
+
+    echo "Searching for .so files in $src_dir..."
+    local so_files=$(find "$src_dir" -type f -name "*.so" 2>/dev/null)
+
+    if [ -z "$so_files" ]; then
+        echo "Notice: No .so files found in source directory $src_dir"
+        return 0
+    fi
+
+    find "$src_dir" -type f -name "*.so" -exec cp {} "$dest_dir" \; 2>/dev/null
+
+    local count=$(echo "$so_files" | wc -l)
+    echo "Successfully copied $count .so files to $dest_dir"
+    return 0
+}
+
+BUILD_DIR=$(dirname $(readlink -f $0))
+SRC_DIR=${BUILD_DIR}/build
+DSET_DIR=${BUILD_DIR}/../mindiesd/plugin
+copy_so_files $SRC_DIR $DSET_DIR

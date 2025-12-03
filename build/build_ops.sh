@@ -24,15 +24,6 @@ if [ $# -ne 0 ]; then
         echo "${current_script_dir}/build_ops.sh not exists"
         exit 1
     fi
-    if [ "x${RELEASE_TMP_DIR}" == "x" ]; then
-        echo "Did not define correct RELEASE_TMP_DIR"
-        exit 1
-    fi
-    release_path=$(realpath ${RELEASE_TMP_DIR})
-    if [ ! -d ${release_path} ]; then
-        echo "Invalid RELEASE_TMP_DIR"
-        exit 1
-    fi
     # 构建环境的toolkit默认安装路径
     if [[ -d "/usr/local/Ascend" ]]; then
         local_toolkit=/usr/local/Ascend/ascend-toolkit/latest
@@ -56,20 +47,6 @@ if [ ! -f ${msopgen} ]; then
     exit 1
 fi
 
-function make_package(){
-    cd ${current_script_dir}
-    rm -rf pkg
-    mkdir pkg
-    chmod +w vendors
-    mv vendors pkg
-    chmod -w pkg/vendors
-    chmod -w pkg
-    ./custom_project/cmake/util/makeself/makeself.sh \
-        --header ./custom_project/cmake/util/makeself/makeself-header.sh \
-        --gzip --notemp --complevel 4 --nomd5 --nocrc --sha256 --chown \
-        ./pkg aie_ops.run 'aie ops'
-}
-
 function build_ops(){
     ori_path=${PWD}
     cd ${current_script_dir}
@@ -79,11 +56,39 @@ function build_ops(){
     rm -rf ${current_script_dir}/vendors/aie_ascendc/bin
     rm -rf ${current_script_dir}/vendors/customize/bin
     rm -rf ${current_script_dir}/vendors/aie_ascendc/op_api
-    make_package
-    if [ "x${is_ci_build}" == "xy" ]; then
-        cp aie_ops.run ${release_path}/
-    fi
     cd ${ori_path}
 }
 
+copy_ops() {
+    dir_path=$(dirname "$PWD")
+    SRC_DIR="${dir_path}/build/vendors"
+    DST_DIR="${dir_path}/mindiesd/ops/vendors"
+
+    echo "Source directory: $SRC_DIR"
+    echo "Destination directory: $DST_DIR"
+
+    # Check source directory
+    if [ ! -d "$SRC_DIR" ]; then
+        echo "Error: source directory $SRC_DIR does not exist!"
+        return 1
+    fi
+
+    # Create destination directory
+    mkdir -p "$DST_DIR"
+
+    # (Optional) Clean the target directory
+    echo "Cleaning destination directory..."
+    rm -rf "${DST_DIR:?}/"*
+
+    echo "Copying all subdirectories under pkg to mindie/ops..."
+    for subdir in "$SRC_DIR"/*; do
+        if [ -d "$subdir" ]; then
+            echo "Copying directory: $subdir → $DST_DIR"
+            cp -a "$subdir" "$DST_DIR/"
+        fi
+    done
+    echo "Copy finished!"
+}
+
 build_ops
+copy_ops

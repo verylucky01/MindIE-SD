@@ -35,6 +35,7 @@ __all__ = [
     'QuantFA'
 ]
 
+
 from .config_utils import ConfigMixin
 from .models.model_utils import DiffusionModel
 from .pipeline.pipeline_utils import OpenSoraPipeline
@@ -56,3 +57,7 @@ from .layers import (
     RMSNorm,
 )
 from .quantization import quantize, TimestepManager, TimestepPolicyConfig, QuantFA
+from .env import set_environment_variables
+
+
+set_environment_variables()
