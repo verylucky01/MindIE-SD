@@ -16,7 +16,6 @@ from pathlib import Path
 import torch
 import torch_npu
 from .attention_operate import AttentionOperateBase, register_op_800
-from .ascend_laser_preprocess import la_preprocess
 from ...utils.exception import ParametersInvalid
 from ...utils import file_utils
 from .common import AttentionParam
@@ -103,12 +102,17 @@ class AscendLaserAttention(AttentionOperateBase):
             scale: torch.Tensor = None
     ) -> torch.Tensor:
 
+        # input layout is bsnds
+        query = query.transpose(1, 2)
+        key = key.transpose(1, 2)
+        value = value.transpose(1, 2)
+        if mask is not None:
+            mask = ~mask.to(torch.bool)
+
+        new_query, new_key, new_value = AscendLaserAttention.la_preprocess_input(query, key, value)
         pre_tokens = MAX_TOKEN
         if attn_param.kv_seqlen % SEQ_LEN_PAD_BASE != 0:
             pre_tokens = (attn_param.kv_seqlen // SEQ_LEN_PAD_BASE + 1) * SEQ_LEN_PAD_BASE - attn_param.kv_seqlen
-        new_query, new_key, new_value = la_preprocess(
-            query, key, value, align_len=256
-        )
 
         _, output1 = torch.ops.mindie.la_mindie_sd(
             new_query, new_key, new_value, None, None, None,
