@@ -31,6 +31,17 @@ link_directories(${PYTORCH_INSTALL_PATH}/lib)
 link_directories(${PYTORCH_NPU_INSTALL_PATH}/lib)
 link_directories($ENV{ASCEND_HOME_PATH}/lib64)
 
+if(NOT "$ENV{ASCEND_CUSTOM_PATH}" STREQUAL "")
+    set(ASCEND_PATH $ENV{ASCEND_CUSTOM_PATH})
+else()
+    set(ASCEND_PATH "/usr/local/Ascend/ascend-toolkit/latest")
+endif()
+set(ACL_INCLUDE_DIRS ${ASCEND_PATH}/include)
+include_directories(
+  ${ACL_INCLUDE_DIRS}
+  ${ACL_INCLUDE_DIRS}/aclnn
+  )
+
 add_library(PTAExtensionOPS SHARED
     ./plugin/register_ops.cpp
     ./plugin/rope.cpp
@@ -39,7 +50,8 @@ add_library(PTAExtensionOPS SHARED
     ./plugin/batchmatmulv3.cpp
     ./plugin/batchmatmulv2.cpp
     ./plugin/batchmatmulv3duo.cpp
-    ./plugin/la_preprocess.cpp)
+    ./plugin/la_preprocess.cpp
+    ./plugin/find_op_path.cpp)
 
 target_compile_features(PTAExtensionOPS PRIVATE cxx_std_17)
 if(DEFINED ENV{USER_ABI_VERSION})
@@ -59,4 +71,59 @@ include_directories(${PYTORCH_INSTALL_PATH}/include)
 include_directories(${PYTORCH_INSTALL_PATH}/include/torch/csrc/distributed)
 include_directories(${PYTORCH_INSTALL_PATH}/include/torch/csrc/api/include)
 
-target_link_libraries(PTAExtensionOPS PUBLIC c10 torch torch_cpu torch_npu ascendcl)
+execute_process(
+  COMMAND which python3
+  OUTPUT_VARIABLE Python3_EXECUTABLE
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+execute_process(
+  COMMAND ${Python3_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_path('include'))"
+  OUTPUT_VARIABLE Python3_INCLUDE_DIRS
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+execute_process(
+  COMMAND ${Python3_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))"
+  OUTPUT_VARIABLE Python3_LIBRARY_DIRS
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+execute_process(
+  COMMAND ${Python3_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LDLIBRARY'))"
+  OUTPUT_VARIABLE Python3_LIBRARY_NAME
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+set(Python3_LIBRARIES ${Python3_LIBRARY_DIRS}/${Python3_LIBRARY_NAME})
+if(NOT EXISTS "${Python3_LIBRARIES}")
+    message(STATUS "Python library ${Python3_LIBRARIES} not found, trying alternate suffix...")
+    string(REGEX MATCH "(\\.[^.]+)$" PYLIB_NAME_EXT "${Python3_LIBRARY_NAME}")
+    string(REGEX REPLACE "(\\.[^.]+)$" "" PYLIB_NAME_WE "${Python3_LIBRARY_NAME}")
+    
+    if(PYLIB_NAME_EXT STREQUAL ".so")
+        set(Python3_LIBRARIES "${Python3_LIBRARY_DIRS}/${PYLIB_NAME_WE}.a")
+    elseif(PYLIB_NAME_EXT STREQUAL ".a")
+        set(Python3_LIBRARIES "${Python3_LIBRARY_DIRS}/${PYLIB_NAME_WE}.so")
+    else()
+        message(FATAL_ERROR "Unknown Python library extension: ${Python3_LIBRARY_NAME}")
+    endif()
+
+    if(NOT EXISTS "${Python3_LIBRARIES}")
+        message(FATAL_ERROR "Python library not found after checking .so and .a: ${Python3_LIBRARIES}")
+    else()
+        message(STATUS "Found alternate Python library: ${Python3_LIBRARIES}")
+    endif()
+else()
+    message(STATUS "Found Python library: ${Python3_LIBRARIES}")
+endif()
+include_directories(${Python3_INCLUDE_DIRS})  
+link_directories(${Python3_LIBRARY_DIRS})   
+
+target_link_libraries(PTAExtensionOPS PUBLIC 
+  c10 
+  torch 
+  torch_cpu 
+  torch_npu 
+  ascendcl 
+  ${Python3_LIBRARIES}
+  ${ASCEND_PATH}/lib64/libascendcl.so
+  ${ASCEND_PATH}/lib64/libnnopbase.so
+  ${ASCEND_PATH}/lib64/libopapi.so
+  )
