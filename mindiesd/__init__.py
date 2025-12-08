@@ -23,6 +23,7 @@ __all__ = [
     'compile_pipe',
     'CacheConfig',
     'CacheAgent',
+    'layernorm_scale_shift',
     'attention_forward',
     'attention_forward_varlen',
     'rotary_position_embedding',
@@ -49,6 +50,7 @@ from .pipeline.compile_pipe import compile_pipe
 
 from .runtime import CacheConfig, CacheAgent
 from .layers import (
+    layernorm_scale_shift,
     attention_forward,
     attention_forward_varlen,
     rotary_position_embedding,

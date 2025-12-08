@@ -18,6 +18,7 @@
 #include "batchmatmulv3.h"
 #include "batchmatmulv3duo.h"
 #include "batchmatmulv2.h"
+#include "adalayernorm.h"
 #include "la_preprocess.h"
 
 
@@ -41,6 +42,9 @@ TORCH_LIBRARY(mindie, m)
     m.def("batchmatmulv2_mindie_sd(Tensor input_x1, Tensor input_x2, Tensor? bias=None, Tensor? offset_w=None, \
         bool? adj_x1=False, bool? adj_x2=False, int? offset_x=0) \
         -> Tensor");
+    m.def("adaln_mindie_sd(Tensor x, Tensor scale, Tensor shift, Tensor? weight=None, \
+        Tensor? bias=None, float? epsilon=1e-5) \
+        -> Tensor");
     m.def("la_preprocess_mindie_sd(Tensor query, Tensor key, Tensor value, int align_len=256) \
         -> (Tensor, Tensor, Tensor)");
 }
@@ -54,5 +58,6 @@ TORCH_LIBRARY_IMPL(mindie, PrivateUse1, m)
     m.impl("batchmatmulv3_mindie_sd", &batchmatmulv3_mindie_sd_impl_npu);
     m.impl("batchmatmulv3duo_mindie_sd", &batchmatmulv3duo_mindie_sd_impl_npu);
     m.impl("batchmatmulv2_mindie_sd", &batchmatmulv2_mindie_sd_impl_npu);
+    m.impl("adaln_mindie_sd", &adaln_mindie_sd_impl_npu);
     m.impl("la_preprocess_mindie_sd", &la_preprocess_mindie_sd_impl_npu);
 }

@@ -50,8 +50,9 @@ add_library(PTAExtensionOPS SHARED
     ./plugin/batchmatmulv3.cpp
     ./plugin/batchmatmulv2.cpp
     ./plugin/batchmatmulv3duo.cpp
-    ./plugin/la_preprocess.cpp
-    ./plugin/find_op_path.cpp)
+    ./plugin/adalayernorm.cpp
+    ./plugin/find_op_path.cpp
+    ./plugin/la_preprocess.cpp)
 
 target_compile_features(PTAExtensionOPS PRIVATE cxx_std_17)
 if(DEFINED ENV{USER_ABI_VERSION})
