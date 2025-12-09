@@ -11,10 +11,9 @@
 # See the Mulan PSL v2 for more details.
 
 from typing import List, Tuple
-
+from mindiesd.utils.logs.logging import logger
+from mindiesd.utils.exception import ParametersInvalid, ModelExecError
 from .cache import CacheConfig, CacheBase
-from ...utils.logs.logging import logger
-from ...utils.exception import ParametersInvalid, ModelExecError
 
 
 class DiTBlockCache(CacheBase):

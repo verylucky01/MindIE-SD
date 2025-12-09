@@ -14,7 +14,7 @@ import sys
 
 sys.path.append('../')
 
-from mindiesd.runtime.cache_agent.cache_agent import CacheAgent, CacheConfig
+from mindiesd.cache_agent import CacheAgent, CacheConfig
 
 
 class TestAttentionCache(unittest.TestCase):
