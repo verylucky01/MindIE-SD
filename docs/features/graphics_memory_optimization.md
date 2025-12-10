@@ -5,7 +5,7 @@
 > - [量化](#量化)
 
 ## 张量并行
-参考多卡并行章节：[张量并行](./multi-device_parallelism.md#张量并行)
+参考多卡并行章节：[张量并行](./parallelism.md#张量并行)
 
 ---
 ## 显存共享
@@ -34,4 +34,4 @@
     ![](../figures/offload%E6%B5%81%E7%A8%8B-image.png)    ![](../figures/%E5%BC%82%E6%AD%A5offload-image.png)
 
 ## 量化
-参考轻量化算法章节：[Linear量化](./lightweight_algorithm.md#linear量化)
+参考轻量化算法章节：[Linear量化](./sparse_quantization.md#linear量化)

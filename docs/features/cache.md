@@ -1,7 +1,7 @@
 > 本章节主要介绍`以存代算`相关加速特性
 > - [DitCache](#ditcache)
 > - [AttentionCache](#attentioncache)
-
+> - [时间步优化](#时间步优化)
 
 
 ## DitCache
@@ -125,3 +125,12 @@
 > Q：Qwen-Image-Edit-2509在开启AttentionCache后推理报错：RuntimeError: NPU out of memory. 
 
 A：开启AttentionCache会增加对显存的消耗，单卡显存容易不足，推荐使用八卡推理。
+
+---
+## 时间步优化
+- 原理：通过减少、调整或跳过扩散模型去噪过程中的某些步骤，在尽量不损失精度的前提下，减少DitModule数量，避免冗余计算，实现模型推理加速。
+- 优化方法：
+
+    （1）修改timestep的数值：例如从50减少到20，从而提升推理速度。
+
+    （2）Adastep采样：是一种自适应的、动态的时间步跳过算法。它的核心思想：在推理过程中实时评估latent当前状态，动态决定跳过step间差异较小的若干步，以达到快速收敛的目的。当前该方法仅在CogVideoX中使用，其他模型没有使用，被DiTCache、AttnCache替代。 

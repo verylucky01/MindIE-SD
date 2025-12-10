@@ -7,13 +7,13 @@ MindIE SD旨在构建昇腾亲和的多模态加速系列套件，配合业内�
 
 主要特性：
 + 昇腾亲和加速算子：提供昇腾亲和多模态的FA、MM、moe、quant类算子，以及融合算子，支持通过layer模块对外使用。
-[**project_optimization**](./features/project_optimization.md)
+[**others**](./features/others.md)
 + 量化稀疏能力：针对昇腾的数据类型和算力分布，提供亲和的算法组合，并通过quantization模块导入使用。
-[**lightweight_algorithm**](./features/lightweight_algorithm.md)
+[**sparse_quantization**](./features/sparse_quantization.md)
 + 以存代算：提供DiT module、DiT block、attn等多种粒度的cache算法，以支持不同的视图场景加速。
-[**kv_cache_offloading**](./features/kv_cache_offloading.md)、[**graphics_memory_optimization**](./features/graphics_memory_optimization.md)
+[**cache**](./features/cache.md)、[**graphics_memory_optimization**](./features/graphics_memory_optimization.md)
 + 多卡并行：提供CFG、USP等并行能力，融入加速算子的API中，实现接口替换后的自动使能。
-[**multi-device_parallelism**](./features/multi-device_parallelism.md)
+[**parallelism**](./features/parallelism.md)
 + 自动亲和加速：基于torch.compile的inductor机制，自定义融合pass，实现昇腾亲和算子替换。
 
 说明：
