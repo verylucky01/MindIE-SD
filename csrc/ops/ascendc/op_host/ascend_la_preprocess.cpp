@@ -16,6 +16,7 @@
 #include "register/op_def_registry.h"
 #include "tiling/platform/platform_ascendc.h"
 #include "register/tilingdata_base.h"
+#include "la_preprocess_tiling.h"
 
 using namespace std;
 
@@ -26,20 +27,12 @@ constexpr int OUTPUTINDEX0 = 0;
 constexpr int OUTPUTINDEX1 = 1;
 constexpr int OUTPUTINDEX2 = 2;
 constexpr int DEFAULTALIGNLEN = 256;
+constexpr int SEQ_LEN_DIM = 2;
+constexpr int HEAD_DIM_DIM = 3;
+constexpr int INPUT_HEAD_NUM_DIM = 2;
+constexpr int INPUT_HEAD_DIM_DIM = 3;
 }
 
-BEGIN_TILING_DATA_DEF(LaPreprocessTiling)
-    TILING_DATA_FIELD_DEF(uint32_t, batchSize);
-    TILING_DATA_FIELD_DEF(uint32_t, qSeqLen);
-    TILING_DATA_FIELD_DEF(uint32_t, kSeqLen);
-    TILING_DATA_FIELD_DEF(uint32_t, vSeqLen);
-    TILING_DATA_FIELD_DEF(uint32_t, headDim);
-    TILING_DATA_FIELD_DEF(uint32_t, headNum);
-    TILING_DATA_FIELD_DEF(uint32_t, alignLen);
-    TILING_DATA_FIELD_DEF(uint32_t, ubSize);
-END_TILING_DATA_DEF;
-
-REGISTER_TILING_DATA_CLASS(LaPreprocess, LaPreprocessTiling)
 
 static ge::graphStatus InferShape(gert::InferShapeContext *context)
 {
@@ -59,6 +52,10 @@ static ge::graphStatus InferShape(gert::InferShapeContext *context)
         return ge::GRAPH_FAILED;
     }
 
+    const auto attrs = context->GetAttrs();
+    if (attrs == nullptr) {
+        return ge::GRAPH_FAILED;
+    }
     auto alignLen = *context->GetAttrs()->GetAttrPointer<int32_t>(0);
 
     // 输出形状: [batch, head_num, padded_seq_len, head_dim]
@@ -66,22 +63,22 @@ static ge::graphStatus InferShape(gert::InferShapeContext *context)
     outQShape->SetDim(0, qShape->GetDim(0));  // batch
     outQShape->SetDim(1, qShape->GetDim(2));  // head_num (从第2维移到第1维)
     int32_t qPadDim = (qShape->GetDim(1) + alignLen - 1) / alignLen * alignLen;  // padded seq_len
-    outQShape->SetDim(2, qPadDim);
-    outQShape->SetDim(3, qShape->GetDim(3));  // head_dim
+    outQShape->SetDim(SEQ_LEN_DIM, qPadDim);
+    outQShape->SetDim(HEAD_DIM_DIM, qShape->GetDim(INPUT_HEAD_DIM_DIM));  // head_dim
 
     outKShape->SetDimNum(kShape->GetDimNum());
     outKShape->SetDim(0, kShape->GetDim(0));
-    outKShape->SetDim(1, kShape->GetDim(2));
+    outKShape->SetDim(1, kShape->GetDim(INPUT_HEAD_NUM_DIM));
     int32_t kPadDim = (kShape->GetDim(1) + alignLen - 1) / alignLen * alignLen;
-    outKShape->SetDim(2, kPadDim);
-    outKShape->SetDim(3, kShape->GetDim(3));
+    outKShape->SetDim(SEQ_LEN_DIM, kPadDim);
+    outKShape->SetDim(HEAD_DIM_DIM, kShape->GetDim(INPUT_HEAD_DIM_DIM));
 
     outVShape->SetDimNum(vShape->GetDimNum());
     outVShape->SetDim(0, vShape->GetDim(0));
-    outVShape->SetDim(1, vShape->GetDim(2));
+    outVShape->SetDim(1, vShape->GetDim(INPUT_HEAD_NUM_DIM));
     int32_t vPadDim = (vShape->GetDim(1) + alignLen - 1) / alignLen * alignLen;
-    outVShape->SetDim(2, vPadDim);
-    outVShape->SetDim(3, vShape->GetDim(3));
+    outVShape->SetDim(SEQ_LEN_DIM, vPadDim);
+    outVShape->SetDim(HEAD_DIM_DIM, vShape->GetDim(INPUT_HEAD_DIM_DIM));
 
     return ge::GRAPH_SUCCESS;
 }
@@ -107,13 +104,16 @@ static ge::graphStatus LaPreprocessTilingFunc(gert::TilingContext *context)
     const gert::StorageShape* kShape = context->GetInputShape(1);
     const gert::StorageShape* vShape = context->GetInputShape(2);
     
-    uint32_t batchSize = qShape->GetStorageShape().GetDim(0);
-    uint32_t qSeqLen = qShape->GetStorageShape().GetDim(1);
-    uint32_t kSeqLen = kShape->GetStorageShape().GetDim(1);
-    uint32_t vSeqLen = vShape->GetStorageShape().GetDim(1);
-    uint32_t headNum = qShape->GetStorageShape().GetDim(2);
-    uint32_t headDim = qShape->GetStorageShape().GetDim(3);
-  
+    uint32_t batchSize = static_cast<uint32_t>(qShape->GetStorageShape().GetDim(0));
+    uint32_t qSeqLen = static_cast<uint32_t>(qShape->GetStorageShape().GetDim(1));
+    uint32_t kSeqLen = static_cast<uint32_t>(kShape->GetStorageShape().GetDim(1));
+    uint32_t vSeqLen = static_cast<uint32_t>(vShape->GetStorageShape().GetDim(1));
+    uint32_t headNum = static_cast<uint32_t>(qShape->GetStorageShape().GetDim(2));
+    uint32_t headDim = static_cast<uint32_t>(qShape->GetStorageShape().GetDim(3));
+
+    if (context->GetAttrs() == nullptr) {
+        return ge::GRAPH_FAILED;
+    }
     auto alignLen = *(context->GetAttrs()->GetAttrPointer<int32_t>(0));
     auto dataType = context->GetInputDesc(0)->GetDataType();
 
@@ -145,6 +145,9 @@ static ge::graphStatus LaPreprocessTilingFunc(gert::TilingContext *context)
     context->GetRawTilingData()->SetDataSize(tiling.GetDataSize());
 
     size_t* currentWorkspace = context->GetWorkspaceSizes(1);
+    if (currentWorkspace == nullptr) {
+        return ge::GRAPH_FAILED;
+    }
     currentWorkspace[0] = 0;
 
     return ge::GRAPH_SUCCESS;
