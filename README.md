@@ -15,8 +15,7 @@
 
 ## Latest News
 
--   11/30/2025：MindIE SD 正式宣布开源并面向公众开放！
--   11/30/2025: We are excited to announce that MindIE SD is now open source and available to the public!
+-   11/30/2025：MindIE SD 正式宣布开源并面向公众开放！[会议日历](https://meeting.ascend.osinfra.cn/?sig=sig-MindIE-SD)
 
 ## 架构介绍及关键特性
 
