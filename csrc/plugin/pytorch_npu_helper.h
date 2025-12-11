@@ -268,7 +268,7 @@ inline c10::Scalar CreateScalarFromBFloat16(const at::Tensor* aclInput)
     c10::BFloat16 value = *(c10::BFloat16 *)aclInput->data_ptr();
     return c10::Scalar(value);
 }
-c10::Scalar ConvertTensorToScalar(const at::Tensor &tensor)
+inline c10::Scalar ConvertTensorToScalar(const at::Tensor &tensor)
 {
     const at::Tensor *aclInput = &tensor;
     switch (aclInput->scalar_type()) {
@@ -307,7 +307,7 @@ inline at::Tensor CopyScalarToDevice(const c10::Scalar &cpuScalar, at::ScalarTyp
     return CopyTensorHostToDevice(scalar_to_tensor(cpuScalar).to(scalarDataType));
 }
 
-AclTensor *ConvertType(const at::Tensor &atTensor)
+inline AclTensor *ConvertType(const at::Tensor &atTensor)
 {
     if (!atTensor.defined()) {
         return nullptr;
@@ -358,7 +358,7 @@ AclTensor *ConvertType(const at::Tensor &atTensor)
     return aclTensorObj;
 }
 
-AclScalar *ConvertType(const at::Scalar &atScalar)
+inline AclScalar *ConvertType(const at::Scalar &atScalar)
 {
     at::ScalarType scalarDataType = atScalar.type();
     aclDataType aclType = K_ATEN_SCALAR_TYPE_TO_ACL_DATATYPE_TABLE[static_cast<int64_t>(scalarDataType)];
