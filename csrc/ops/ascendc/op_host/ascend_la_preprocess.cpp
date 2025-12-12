@@ -104,6 +104,9 @@ static ge::graphStatus LaPreprocessTilingFunc(gert::TilingContext *context)
     const gert::StorageShape* kShape = context->GetInputShape(1);
     const gert::StorageShape* vShape = context->GetInputShape(2);
     
+    if (qShape == nullptr || kShape == nullptr || vShape == nullptr) {
+        return ge::GRAPH_FAILED;
+    }
     uint32_t batchSize = static_cast<uint32_t>(qShape->GetStorageShape().GetDim(0));
     uint32_t qSeqLen = static_cast<uint32_t>(qShape->GetStorageShape().GetDim(1));
     uint32_t kSeqLen = static_cast<uint32_t>(kShape->GetStorageShape().GetDim(1));
@@ -115,6 +118,9 @@ static ge::graphStatus LaPreprocessTilingFunc(gert::TilingContext *context)
         return ge::GRAPH_FAILED;
     }
     auto alignLen = *(context->GetAttrs()->GetAttrPointer<int32_t>(0));
+    if (context->GetInputDesc(0) == nullptr) {
+        return ge::GRAPH_FAILED;
+    }
     auto dataType = context->GetInputDesc(0)->GetDataType();
 
     uint32_t tilingKey = 0;
