@@ -20,6 +20,7 @@
 #include "batchmatmulv2.h"
 #include "adalayernorm.h"
 #include "la_preprocess.h"
+#include "rainfusionattention.h"
 
 
 TORCH_LIBRARY(mindie, m)
@@ -47,6 +48,11 @@ TORCH_LIBRARY(mindie, m)
         -> Tensor");
     m.def("la_preprocess_mindie_sd(Tensor query, Tensor key, Tensor value, int align_len=256) \
         -> (Tensor, Tensor, Tensor)");
+    m.def("rainfusionattention_mindie_sd(Tensor query, Tensor key, Tensor value, Tensor select_idx, \
+        Tensor select_num_idx, int[] blockshape, Tensor? attn_mask=None, int[]? actual_seq_qlen=None, \
+        int[]? actual_seq_kvlen=None, Tensor? block_table=None, str q_input_layout='TND', str kv_input_layout='TND', \
+        int head_num=1, int mask_type=0, float scale=1.0, \
+        int inner_precise=1, int block_size=0) -> (Tensor, Tensor)");
 }
 
 
@@ -60,4 +66,5 @@ TORCH_LIBRARY_IMPL(mindie, PrivateUse1, m)
     m.impl("batchmatmulv2_mindie_sd", &batchmatmulv2_mindie_sd_impl_npu);
     m.impl("adaln_mindie_sd", &adaln_mindie_sd_impl_npu);
     m.impl("la_preprocess_mindie_sd", &la_preprocess_mindie_sd_impl_npu);
+    m.impl("rainfusionattention_mindie_sd", &rainfusionattention_mindie_sd_impl_npu);
 }
