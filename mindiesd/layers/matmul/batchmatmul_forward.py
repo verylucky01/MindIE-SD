@@ -17,18 +17,12 @@ import torch
 from ...utils.get_platform import get_npu_device, NPUDevice
 from ...utils.exception import ParametersInvalid
 from ...utils import logger, file_utils
+from .. import _custom_ops as ops
 
 BATCHMATMUL_V2 = "batchmatmulv2"
 BATCHMATMUL_V3 = "batchmatmulv3"
 
-current_path = Path(__file__).resolve()
-if len(current_path.parents) < 3:
-    raise ParametersInvalid("The parents level is insufficient.")
-ops_path = current_path.parents[2] / "plugin"
-ops_path = file_utils.standardize_path(str(ops_path))
-ops_file = os.path.join(ops_path, "libPTAExtensionOPS.so")
-file_utils.check_file_safety(ops_file, permission_mode=file_utils.MODELDATA_FILE_PERMISSION)
-torch.ops.load_library(ops_file)
+
 
 
 def batchmatmul_forward(x1, x2, bias=None, transpose_x1=False, transpose_x2=False, offset_x=0, offset_w=None,
@@ -66,7 +60,7 @@ def _batchmatmulv2_forward(x1, x2, bias=None, transpose_x1=False, transpose_x2=F
         logger.warning("The enable_hf32 parameter is not supported in batchmatmulv2_mindie_sd and will be ignored.")
 
     # use batchmatmulv2_mindie_sd
-    return torch.ops.mindie.batchmatmulv2_mindie_sd(
+    return ops.batch_matmul_v2(
         input_x1=x1,
         input_x2=x2,
         bias=bias,
@@ -82,7 +76,7 @@ def _batchmatmulv3_forward(x1, x2, bias=None, transpose_x1=False, transpose_x2=F
     npu_device = get_npu_device()
     if npu_device == NPUDevice.A2:
         # use batchmatmulv3_mindie_sd
-        return torch.ops.mindie.batchmatmulv3_mindie_sd(
+        return ops.batch_matmul_v3(
             x1=x1,
             x2=x2,
             bias=bias,
@@ -99,7 +93,7 @@ def _batchmatmulv3_forward(x1, x2, bias=None, transpose_x1=False, transpose_x2=F
                             and offset_w parameters. Other parameters will be ignored.")
 
         # use batchmatmulv3duo_mindie_sd
-        return torch.ops.mindie.batchmatmulv3duo_mindie_sd(
+        return ops.batch_matmul_v3_duo(
             x1=x1,
             x2=x2,
             bias=bias,

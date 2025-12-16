@@ -15,15 +15,9 @@ from pathlib import Path
 
 import torch
 from ..utils import ParametersInvalid, file_utils
+from . import _custom_ops as ops
 
-current_path = Path(__file__).resolve()
-if len(current_path.parents) < 2:
-    raise ParametersInvalid("The parents level is insufficient.")
-ops_path = current_path.parents[1] / "plugin"
-ops_path = file_utils.standardize_path(str(ops_path))
-ops_file = os.path.join(ops_path, "libPTAExtensionOPS.so")
-file_utils.check_file_safety(ops_file, permission_mode=file_utils.MODELDATA_FILE_PERMISSION)
-torch.ops.load_library(ops_file)
+
 
 
 def check_input_params(x, cos, sin, rotated_mode, head_first, fused):
@@ -107,7 +101,7 @@ def rotary_position_embedding(x: torch.Tensor,
     x_in = x.to(cos.dtype)
 
     if fused:
-        x_out = torch.ops.mindie.rope_mindie_sd(x_in, cos, sin, mode)
+        x_out = ops.rope(x_in, cos, sin, mode)
     elif mode:
         # Used for HunyuanDiT, OpenSora, Flux, CogVideox
         x_real, x_imag = x_in.reshape(*x_in.shape[:-1], -1, 2).unbind(-1)  # [B, S, H, D//2]

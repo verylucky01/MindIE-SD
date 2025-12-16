@@ -16,15 +16,8 @@ from pathlib import Path
 import torch
 from ...utils.exception import ParametersInvalid
 from ...utils import logger, file_utils
+from .. import _custom_ops as ops
 
-current_path = Path(__file__).resolve()
-if len(current_path.parents) < 3:
-    raise ParametersInvalid("The parents level is insufficient.")
-ops_path = current_path.parents[2] / "plugin"
-ops_path = file_utils.standardize_path(str(ops_path))
-ops_file = os.path.join(ops_path, "libPTAExtensionOPS.so")
-file_utils.check_file_safety(ops_file, permission_mode=file_utils.MODELDATA_FILE_PERMISSION)
-torch.ops.load_library(ops_file)
 
 
 def matmul_forward(x1, x2, bias=None, transpose_x1=False, transpose_x2=False, offset_x=0, offset_w=None,
@@ -52,7 +45,7 @@ def matmul_forward(x1, x2, bias=None, transpose_x1=False, transpose_x2=False, of
 
 def _matmulv2_forward(x1, x2, bias=None, transpose_x1=False, transpose_x2=False,
                       offset_x=0, offset_w=None):
-    return torch.ops.mindie.matmulv2_mindie_sd(
+    return ops.matmul_v2(
         input_x1=x1,
         input_x2=x2,
         bias=bias,
