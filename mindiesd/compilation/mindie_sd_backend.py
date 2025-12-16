@@ -17,9 +17,24 @@ from typing import Any, Callable, Optional, Sequence
 import torch
 import torch.fx as fx
 from torch._dynamo.backends.common import aot_autograd
-from torch._inductor.decomposition import select_decomp_table
 from torch._inductor.freezing import freeze
-from torch._inductor.fx_passes.post_grad import decompose_auto_functionalized
+from torch._inductor.decomposition import select_decomp_table
+
+try:
+    from torch.fx.passes.graph_transform_observer import GraphTransformObserver
+except ImportError:
+    class GraphTransformObserver:
+        def __init__(self, graph_module, name, subsystem=None, log_url=None):
+            self.graph_module = graph_module
+            self.name = name
+            self.subsystem = subsystem
+            self.log_url = log_url
+        
+        def apply_gm_pass(self, pass_obj):
+            pass_obj(self.graph_module)
+        
+        def apply_graph_pass(self, pass_func):
+            pass_func(self.graph_module.graph)
 
 from .compiliation_config import CompilationConfig
 
@@ -28,6 +43,21 @@ from .passes.register_pattern_to_pass import patterns
 from .passes.redundant_node_elimination_pass import ReduandantNodeEliminationPass
 
 logger = logging.getLogger(__name__)
+
+
+def decompose_auto_functionalized(graph: fx.Graph):
+    try:
+        from torch._inductor.fx_passes.post_grad import decompose_auto_functionalized as original_decompose
+        return original_decompose(graph)
+    except ImportError:
+        for node in list(graph.nodes):
+            if node.op == 'call_function' and 'auto_functionalized' in str(node.target):
+                orig_name = node.target.__name__.replace('_auto_functionalized', '')
+                if hasattr(torch, orig_name):
+                    node.target = getattr(torch, orig_name)
+        graph.eliminate_dead_code()
+        graph.lint()
+        return graph
 
 
 class MindieSDBackend:
@@ -52,14 +82,12 @@ class MindieSDBackend:
 
     @classmethod
     def apply_redundant_node_elimination_pass(cls, graph: fx.GraphModule, inputs):
-        GraphTransformObserver = functools.partial(
-            torch.fx.passes.graph_transform_observer.GraphTransformObserver,
+        GraphTransformObserver(
+            graph_module=graph,
+            name="redundant_node_elimination_pass",
             subsystem="redundant_node_elimination_pass",
             log_url=CompilationConfig.graph_log_url,
-        )
-        GraphTransformObserver(graph, "redundant_node_elimination_pass").apply_gm_pass(
-            ReduandantNodeEliminationPass()
-        )
+        ).apply_gm_pass(ReduandantNodeEliminationPass())
         logger.debug("Graph after redundant node elimination pass:")
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(graph.print_readable(print_output=False))
@@ -67,28 +95,24 @@ class MindieSDBackend:
     @classmethod
     def apply_pattern_match_passes(cls, graph: fx.GraphModule, inputs):
         activate_pattern_once()
-        GraphTransformObserver = functools.partial(
-            torch.fx.passes.graph_transform_observer.GraphTransformObserver,
+        GraphTransformObserver(
+            graph_module=graph,
+            name="pattern_match_pass",
             subsystem="pattern_match_passes",
             log_url=CompilationConfig.graph_log_url,
-        )
-        GraphTransformObserver(graph, f"pattern_match_pass").apply_gm_pass(
-            patterns
-        )
+        ).apply_gm_pass(patterns)
         logger.debug("Graph after pattern matching:")
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(graph.print_readable(print_output=False))
 
     @classmethod
     def apply_decompose_auto_functionalized_pass(cls, graph: fx.GraphModule):
-        GraphTransformObserver = functools.partial(
-            torch.fx.passes.graph_transform_observer.GraphTransformObserver,
+        GraphTransformObserver(
+            graph_module=graph,
+            name="decompose_auto_functionalized",
             subsystem="decompose_auto_functionalized_pass",
             log_url=CompilationConfig.graph_log_url,
-        )
-        GraphTransformObserver(graph, "decompose_auto_functionalized").apply_graph_pass(
-            decompose_auto_functionalized
-        )
+        ).apply_graph_pass(decompose_auto_functionalized)
 
     def compile(
         self,

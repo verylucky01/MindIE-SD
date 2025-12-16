@@ -5,10 +5,8 @@ import time
 import sys
 from packaging.version import Version
 from pathlib import Path
-compilation_dir = Path(__file__).parent.parent.parent / "mindiesd"
-sys.path.append(str(compilation_dir))
-from compilation import MindieSDBackend
-from compilation.passes.register_pattern_to_pass import register_pattern_to_pass, PatternBase
+from mindiesd.compilation import MindieSDBackend
+from mindiesd.compilation.passes.register_pattern_to_pass import register_pattern_to_pass, PatternBase
 
 
 class SamplePass(PatternBase):
@@ -48,11 +46,6 @@ class TestModel(torch.nn.Module):
 
 class TestCompilationCase(unittest.TestCase):
     def test_fused_kernel_perf_and_accuracy(self):
-        # 仅torch版本满足要求才运行该用例
-        torch_version = Version(torch.__version__.split("+")[0])
-        if torch_version < Version("2.8.0"):
-            return
-
         model = TestModel()
         x = torch.randint(0, 10, (32, 64))
         y = torch.randint(0, 10, (32, 64))
