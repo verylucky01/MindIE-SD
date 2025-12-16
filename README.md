@@ -53,23 +53,16 @@
 
 下面以 Wan2.1 模型为例，展示在 Atlas 800I A2 (1\*64G) 机器上单卡和多卡实现不同加速特性的加速效果。
 
-其中cache表示使用[AttentionCache](./docs/features/cache.md#attentioncache)特性, TP表示使用[Tensor Parallel](./docs/features/parallelism.md#张量并行)特性, FA稀疏表示使用FA稀疏中的[RainFusion特性](./docs/features/sparse_quantization.md#fa稀疏)，CFG表示使用[CFG并行](./docs/features/parallelism.md#cfg并行)特性，Ulysses表示使用[Ulysses并行](./docs/features/parallelism.md#ulysses-sequence-parallel)加速特性，模型生成的视频的H\*W为832\*480, sample_steps为50。
+其中Cache表示使用[AttentionCache](./docs/features/cache.md#attentioncache)特性, TP表示使用[Tensor Parallel](./docs/features/parallelism.md#张量并行)特性, FA稀疏表示使用FA稀疏中的[RainFusion特性](./docs/features/sparse_quantization.md#fa稀疏)，CFG表示使用[CFG并行](./docs/features/parallelism.md#cfg并行)特性，Ulysses表示使用[Ulysses并行](./docs/features/parallelism.md#ulysses-sequence-parallel)加速特性，模型生成的视频的H\*W为832\*480, sample_steps为50。
 
 ### 单卡加速效果
 
 #### cache 加速效果
 
-| baseline <br> 1024.8s| + 高性能 FA 算子 <br> 766.6s 1.34x| + cache <br> 612.6s 1.67x|
-|:---:|:---:|:---:|
-|![](./docs/figures/t2v-14B_832_480_单卡base.gif)|![](./docs/figures/t2v-14B_832_480_单卡+FA.gif)|![](./docs/figures/t2v-14B_832_480_单卡%20+%20FA%20+%20attentioncache3.gif)|
-
-
-#### 稀疏加速效果
-
-| + FA 稀疏度 0.55 <br> 611.4s 1.68x| + FA 稀疏度 0.64 <br> 588.7s 1.74x| + FA 稀疏度 0.8 <br> ***560.5s** 1.83x|
-|:---:|:---:|:---:|
-|![](./docs/figures/t2v-14B_832_480_单卡%20+%20FA%20+%20attentioncache%20+%20FA%20稀疏%201.gif)|![](./docs/figures/t2v-14B_832_480_单卡%20+%20FA%20+%20attentioncache%20+%20FA%20稀疏%202.gif)|![](./docs/figures/t2v-14B_832_480_单卡%20+%20FA%20+%20attentioncache%20+%20FA%20稀疏3.gif)|
-
+| Baseline | + Cache 加速比1.6 | + Cache 加速比2.0 | + Cache 加速比2.4 |
+|:---:|:---:|:---:|:---:|
+| 860.2s | 631.7s 1.36x | 541.8s 1.59x | 516.9s ***1.66x** |
+| ![](./docs/figures/单卡base%20+%20高性能FA算子.gif) | ![](./docs/figures/单卡%20+%20高性能FA算子%20+%20开启attentioncache+加速比为1.6.gif) | ![](./docs/figures/单卡%20+%20高性能FA算子%20+%20开启attentioncache+加速比为2.0.gif) | ![](./docs/figures/单卡%20+%20高性能FA算子%20+%20开启attentioncache+加速比为2.4.gif) |
 
 ### 并行策略效果
 
