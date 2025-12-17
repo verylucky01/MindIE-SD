@@ -81,7 +81,7 @@ if __name__ == "__main__":
     mindie_sd_version = get_mindiesd_version()
 
     setup(
-        name="mindie_sd",
+        name="mindiesd",
         version=mindie_sd_version,
         author="ascend",
         description="build wheel for mindie sd",

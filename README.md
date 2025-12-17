@@ -34,7 +34,7 @@
     python setup.py bdist_wheel
 
     cd dist
-    pip install mindie_sd-*.whl
+    pip install mindiesd-*.whl
     ```
 
 2.  安装模型所需依赖并执行推理。

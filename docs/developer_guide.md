@@ -167,7 +167,7 @@ python setup.py bdist_wheel
 -   方式一：常规安装（使用默认版本号）
 ```
 cd dist
-pip install mindie_sd-*.whl
+pip install mindiesd-*.whl
 ```
 
 -   方式二：开发者可编辑模式安装（可通过环境变量MINDIE_SD_VERSION_OVERRIDE修改版本号）
@@ -183,7 +183,7 @@ pip install -e .
 
 可通过以下命令卸载MindIE SD：
 ```
-pip uninstall mindie_sd
+pip uninstall mindiesd
 ```
 
 2. 运行全量UT测试用例：

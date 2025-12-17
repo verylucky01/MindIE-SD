@@ -14,31 +14,21 @@
 # 在构建环境用msopgen工具生成工程，然后将要发布的算子交付件拷贝到新生成的工程构建
 set -e
 
-is_ci_build="n"
-current_script_dir=$(dirname $(readlink -f $0))
-# 构建过程source该脚本需要传递实际路径，通过参数数量判断是否为构建流程
-if [ $# -ne 0 ]; then
-    is_ci_build="y"
-    current_script_dir=$(realpath $1)
-    if [ ! -f ${current_script_dir}/build_ops.sh ]; then
-        echo "${current_script_dir}/build_ops.sh not exists"
-        exit 1
-    fi
-    # 构建环境的toolkit默认安装路径
-    if [[ -d "/usr/local/Ascend" ]]; then
-        local_toolkit=/usr/local/Ascend/ascend-toolkit/latest
-    else
-        local_toolkit=/home/slave1/Ascend/ascend-toolkit/latest
-    fi
+current_script_dir=$(realpath $1)
+
+if [ -n "${ASCEND_TOOLKIT_HOME}" ]; then
+    local_toolkit=${ASCEND_TOOLKIT_HOME}
+    echo "Using ASCEND_TOOLKIT_HOME: ${local_toolkit}"
+elif [ -d "/usr/local/Ascend/ascend-toolkit/latest" ]; then
+    local_toolkit=/usr/local/Ascend/ascend-toolkit/latest
+    echo "Using default toolkit path: ${local_toolkit}"
+elif [ -d "/home/slave1/Ascend/ascend-toolkit/latest" ]; then
+    local_toolkit=/home/slave1/Ascend/ascend-toolkit/latest
+    echo "Using alternative toolkit path: ${local_toolkit}"
 else
-    # 对于非构建环境，推荐整包安装，通过source set_env.sh脚本会定义环境变量
-    if [ "x${ASCEND_TOOLKIT_HOME}" != "x" ]; then
-        local_toolkit=${ASCEND_TOOLKIT_HOME}
-    else
-        echo "Can not find toolkit path, please set ASCEND_TOOLKIT_HOME"
-        echo "eg: export ASCEND_TOOLKIT_HOME=/usr/local/Ascend/ascend-toolkit/latest"
-        exit 1
-    fi
+    echo "Can not find toolkit path, please set ASCEND_TOOLKIT_HOME"
+    echo "eg: export ASCEND_TOOLKIT_HOME=/usr/local/Ascend/ascend-toolkit/latest"
+    exit 1
 fi
 
 msopgen=${local_toolkit}/python/site-packages/bin/msopgen
