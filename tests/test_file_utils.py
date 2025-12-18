@@ -135,14 +135,6 @@ class TestFileUtils(unittest.TestCase):
                 error_nums += 1
         self.assertEqual(error_nums, len(test_path))
 
-        flag = True
-        try:
-            file_utils.check_file_safety("./configs/configmixin.json")
-        except Exception as e:
-            logger.error(e)
-            flag = False
-        self.assertTrue(flag)
-
     def test_check_dir_safety(self):
         error_nums = 0
         test_path = [

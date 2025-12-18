@@ -16,9 +16,9 @@ from pathlib import Path
 import torch
 import torch_npu
 from .attention_operate import AttentionOperateBase, register_op_800
-from .ascend_laser_preprocess import la_preprocess
 from ...utils.exception import ParametersInvalid
 from ...utils import file_utils
+from .. import _custom_ops as ops
 from .common import AttentionParam
 
 SEQ_LEN_PAD_BASE = 256
@@ -32,14 +32,6 @@ DIM_BASE = 128
 SEQLEN_INDEX = -2
 DIM_INDEX = -1
 
-current_path = Path(__file__).resolve()
-if len(current_path.parents) < 3:
-    raise ParametersInvalid("The parents level is insufficient.")
-ops_path = current_path.parents[2] / "plugin"
-ops_path = file_utils.standardize_path(str(ops_path))
-ops_file = os.path.join(ops_path, "libPTAExtensionOPS.so")
-file_utils.check_file_safety(ops_file, permission_mode=file_utils.MODELDATA_FILE_PERMISSION)
-torch.ops.load_library(ops_file)
 
 
 @register_op_800("ascend_laser_attention")
@@ -103,14 +95,19 @@ class AscendLaserAttention(AttentionOperateBase):
             scale: torch.Tensor = None
     ) -> torch.Tensor:
 
+        # input layout is bsnds
+        query = query.transpose(1, 2)
+        key = key.transpose(1, 2)
+        value = value.transpose(1, 2)
+        if mask is not None:
+            mask = ~mask.to(torch.bool)
+
+        new_query, new_key, new_value = AscendLaserAttention.la_preprocess_input(query, key, value)
         pre_tokens = MAX_TOKEN
         if attn_param.kv_seqlen % SEQ_LEN_PAD_BASE != 0:
             pre_tokens = (attn_param.kv_seqlen // SEQ_LEN_PAD_BASE + 1) * SEQ_LEN_PAD_BASE - attn_param.kv_seqlen
-        new_query, new_key, new_value = la_preprocess(
-            query, key, value, align_len=256
-        )
 
-        _, output1 = torch.ops.mindie.la_mindie_sd(
+        _, output1 = ops.laser_attention(
             new_query, new_key, new_value, None, None, None,
             scale, attn_param.head_num, "BNSD", 1.0, pre_tokens, 1, True
         )

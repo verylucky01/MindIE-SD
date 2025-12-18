@@ -41,6 +41,8 @@ function release_op_host(){
         ascend_laser_attention_tiling.h
         ascend_la_preprocess.cpp
         la_preprocess_tiling.h
+        sparse_block_estimate.cpp
+        sparse_block_estimate_tiling.h
     )
     cp ${files[@]} ${dst}/op_host
 }
@@ -57,6 +59,8 @@ function release_op_kernel(){
         VectorForward.h
         la_preprocess.cpp
         la_preprocess.h
+        sparse_block_estimate.cpp
+        sparse_block_estimate.h
     )
     cp ${files[@]} ${dst}/op_kernel
 }

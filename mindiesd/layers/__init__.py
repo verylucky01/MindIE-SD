@@ -15,4 +15,5 @@ from .flash_attn.attention_forward_varlen import attention_forward_varlen
 from .activation import get_activation_layer
 from .linear import Linear
 from .norm import RMSNorm
+from .adalayernorm import layernorm_scale_shift
 from .rope import rotary_position_embedding
