@@ -41,6 +41,19 @@ function release_op_host(){
         ascend_laser_attention_tiling.h
         ascend_la_preprocess.cpp
         la_preprocess_tiling.h
+        block_sparse_attention_proto.cpp
+        block_sparse_attention_tiling.cpp
+        block_sparse_attention.cpp
+        block_sparse_attention_tiling_compile_info.h
+        block_sparse_attention_tiling_const.h
+        block_sparse_attention_tiling_context.h
+        block_sparse_attention_tiling_struct.h
+        block_sparse_attention_tiling_v2.h
+        block_sparse_attention_tiling.h
+        data_copy_transpose_tiling_def.h
+        data_copy_transpose_tiling.h
+        error_manager.h 
+        ops_error.h
         sparse_block_estimate.cpp
         sparse_block_estimate_tiling.h
     )
@@ -59,6 +72,12 @@ function release_op_kernel(){
         VectorForward.h
         la_preprocess.cpp
         la_preprocess.h
+        block_sparse_attention.cpp 
+        block_sparse_attention_base.h
+        block_sparse_attention_empty_tensor.h
+        block_sparse_attention_s1s2_bns1_x910_base.h
+        block_sparse_attention_s1s2_bns1_x910.h
+        kernel_data_copy_transpose.h
         sparse_block_estimate.cpp
         sparse_block_estimate.h
     )

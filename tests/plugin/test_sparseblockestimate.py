@@ -255,7 +255,7 @@ class TestSparseBlockEstimate(unittest.TestCase):
                 query=query.to(self.device),
                 key=key.to(self.device),
                 actual_seq_lengths=None, actual_seq_lengths_kv=None,
-                input_layout=self.input_layout,
+                input_layout="TND",
                 stride=self.stride,
                 sparse_size=self.sparse_size,
                 num_heads=self.head_num,
