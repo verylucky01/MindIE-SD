@@ -19,7 +19,6 @@ __all__ = [
     'attention_forward_varlen',
     'rotary_position_embedding',
     'get_activation_layer',
-    'Linear',
     'RMSNorm',
     'quantize',
     'TimestepManager',
@@ -34,7 +33,6 @@ from .layers import (
     attention_forward_varlen,
     rotary_position_embedding,
     get_activation_layer,
-    Linear,
     RMSNorm,
 )
 from .quantization import quantize, TimestepManager, TimestepPolicyConfig, QuantFA
