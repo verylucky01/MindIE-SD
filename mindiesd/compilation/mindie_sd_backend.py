@@ -18,7 +18,7 @@ import torch
 import torch.fx as fx
 from torch._dynamo.backends.common import aot_autograd
 from torch._inductor.freezing import freeze
-from torch._inductor.decomposition import select_decomp_table
+from ._custom_decomposition import select_custom_decomp_table
 
 try:
     from torch.fx.passes.graph_transform_observer import GraphTransformObserver
@@ -164,8 +164,7 @@ class MindieSDBackend:
             else:
                 return graph_rewrite_after_freezing(fx_graph, inputs)
 
-        # Use the default decomposition table to decompose operators.
-        decompositions = select_decomp_table()
+        decompositions = select_custom_decomp_table()
         # Use AOT Autograd to handle the forward compilation.
         return aot_autograd(
             fw_compiler=compile_inner,
