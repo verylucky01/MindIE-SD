@@ -24,8 +24,9 @@ def activate_pattern_once():
             from ..patterns import RMSNormPattern
             register_pattern_to_pass(RMSNormPattern)
         if CompilationConfig.fusion_patterns.enable_rope:
-            from ..patterns import RopePattern
-            register_pattern_to_pass(RopePattern)
+            from ..patterns import RopePatternList
+            for _rope_pattern in RopePatternList:
+                register_pattern_to_pass(_rope_pattern)
 
     if not once_flag.is_set():
         with threading.Lock():

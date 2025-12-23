@@ -13,8 +13,8 @@
 
 __all__ = [
     'RMSNormPattern',
-    'RopePattern'
+    'RopePatternList'
 ]
 
 from .rms_norm_pattern import RMSNormPattern
-from .rope_pattern import RopePattern
+from .rope_pattern import RopePatternList

@@ -46,3 +46,29 @@ class RopePattern(PatternBase):
                                                         head_first=False, fused=True)
             return norm_q
         return func(x, cos, sin)
+
+
+class RopePatternDiffusersFlux(RopePattern):
+    @staticmethod
+    def inputs():
+        x = torch.empty(2, 2, 2, 2, dtype=torch.bfloat16, device="meta")
+        cos = torch.empty(1, 2, 1, 2, dtype=torch.float32, device="meta")
+        sin = torch.empty(1, 2, 1, 2, dtype=torch.float32, device="meta")
+        return [x, cos, sin]
+
+    @staticmethod
+    def pattern(x, cos, sin):
+        def func(x, cos, sin):
+            x_real, x_imag = x.reshape(*x.shape[:-1], -1, 2).unbind(-1)  # [B, H, S, D//2]
+            x_rotated = torch.stack([-x_imag, x_real], dim=-1).flatten(3)
+
+            x_out = torch.ops.npu._npu_dtype_cast.default(x, torch.float32) * cos + \
+                torch.ops.npu._npu_dtype_cast.default(x_rotated, torch.float32) * sin
+            out = torch.ops.npu._npu_dtype_cast.default(x_out, x.dtype)
+            return out
+        return func(x, cos, sin)
+
+RopePatternList = [
+    RopePattern,
+    RopePatternDiffusersFlux,
+]
