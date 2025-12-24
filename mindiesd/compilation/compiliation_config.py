@@ -16,6 +16,7 @@ import dataclasses
 class FusionPatterns:
     enable_rms_norm: bool = False
     enable_rope: bool = True
+    enable_fast_gelu: bool = True
 
 
 class CompilationConfig:

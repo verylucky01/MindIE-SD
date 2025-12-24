@@ -24,7 +24,8 @@ def activate_pattern_once():
 
         pattern_registry = {
             "enable_rms_norm": ("RMSNormPatternGroup", "..patterns"),
-            "enable_rope": ("RopePatternGroup", "..patterns")
+            "enable_rope": ("RopePatternGroup", "..patterns"),
+            "enable_fast_gelu": ("GELUPatternGroup", "..patterns")
         }
 
         fusion_config = CompilationConfig.fusion_patterns

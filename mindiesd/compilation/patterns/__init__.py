@@ -14,7 +14,9 @@
 __all__ = [
     'RMSNormPatternGroup',
     'RopePatternGroup',
+    'GELUPatternGroup',
 ]
 
 from .rms_norm_pattern import RMSNormPatternGroup
 from .rope_pattern import RopePatternGroup
+from .gelu_pattern import GELUPatternGroup
