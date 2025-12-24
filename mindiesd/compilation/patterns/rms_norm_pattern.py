@@ -20,23 +20,31 @@ if npu_available:
     import mindiesd
 
 
-class RMSNormPattern(PatternBase):
-    @staticmethod
-    def inputs():
-        hidden_states = torch.empty(2, 2, dtype=torch.bfloat16, device="meta")
-        weight = torch.empty(2, dtype=torch.bfloat16, device="meta")
-        return [hidden_states, weight]
+def create(dtype):
+    class RMSNormPattern(PatternBase):
+        @staticmethod
+        def name():
+            return __class__.__name__ + f"-{dtype}"
 
-    @staticmethod
-    def pattern(query, dim_head):
-        def func(query, dim_head):
-            norm_q = torch.nn.RMSNorm(dim_head, eps=1e-6)
-            return norm_q(query)
-        return func(query, dim_head)
+        @staticmethod
+        def inputs():
+            hidden_states = torch.empty(2, 2, dtype=dtype, device="meta")
+            weight = torch.empty(2, dtype=dtype, device="meta")
+            return [hidden_states, weight]
 
-    @staticmethod
-    def replacement(query, dim_head):
-        def func(query, dim_head):
-            norm_q = mindiesd.RMSNorm(dim_head, eps=1e-6)
-            return norm_q(query)
-        return func(query, dim_head)
+        @staticmethod
+        def pattern(query, dim_head):
+            def func(query, dim_head):
+                norm_q = torch.nn.RMSNorm(dim_head, eps=1e-6)
+                return norm_q(query)
+            return func(query, dim_head)
+
+        @staticmethod
+        def replacement(query, dim_head):
+            def func(query, dim_head):
+                norm_q = mindiesd.RMSNorm(dim_head, eps=1e-6)
+                return norm_q(query)
+            return func(query, dim_head)
+    return RMSNormPattern
+
+RMSNormPatternGroup = [create(torch.bfloat16)]

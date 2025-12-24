@@ -79,10 +79,11 @@ class PatternMatchPass(GraphModulePass):
         self.pattern_replacements[name] = (pattern, replacement)
         logger.debug("Registering pattern: %s", name)
 
-        if not hasattr(pm, "fwd_only") and IS_TORCH_21:
-            pm.fwd_only = inference_graph
-        else:
-            logger.warning("fwd_only not available in current torch version")
+        if not hasattr(pm, "fwd_only"):
+            if IS_TORCH_21:
+                pm.fwd_only = inference_graph
+            else:
+                logger.warning("fwd_only not available in current torch version")
 
         def fwd_only_with_custom_decomp(
             fn: Callable[..., Any],
