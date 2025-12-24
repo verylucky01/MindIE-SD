@@ -12,6 +12,7 @@
 
 from .flash_attn.attention_forward import attention_forward
 from .flash_attn.attention_forward_varlen import attention_forward_varlen
+from .flash_attn.sparse_flash_attn import sparse_attention
 from .activation import get_activation_layer
 from .norm import RMSNorm
 from .adalayernorm import layernorm_scale_shift
