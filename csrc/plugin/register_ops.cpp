@@ -14,13 +14,10 @@
 
 #include "rope.h"
 #include "la.h"
-#include "matmulv2.h"
-#include "batchmatmulv3.h"
-#include "batchmatmulv3duo.h"
-#include "batchmatmulv2.h"
 #include "adalayernorm.h"
 #include "la_preprocess.h"
 #include "rainfusionattention.h"
+#include "block_sparse_attention.h"
 #include "sparse_block_estimate.h"
 
 
@@ -33,17 +30,6 @@ TORCH_LIBRARY(mindie, m)
         drop_mask=None, float scale_value=1.0, int head_num=2, str input_layout='BNSD', \
         float keep_prob=1.0, int pre_tokens=2147483647, int next_tokens=1, \
         bool is_highPrecision=True)  -> (Tensor, Tensor)");
-    m.def("matmulv2_mindie_sd(Tensor input_x1, Tensor input_x2, Tensor? bias=None, Tensor? offset_w=None, \
-           bool? transpose_x1=False, bool? transpose_x2=False, int? offset_x=0) \
-           -> Tensor");
-    m.def("batchmatmulv3_mindie_sd(Tensor x1, Tensor x2, Tensor? bias=None, Tensor? offset_w=None, \
-        bool? adj_x1=False, bool? adj_x2=False, int? offset_x=0, bool? enable_hf32=False) \
-        -> Tensor");
-    m.def("batchmatmulv3duo_mindie_sd(Tensor x1, Tensor x2, Tensor? bias=None, Tensor? offset_w=None) \
-        -> Tensor");
-    m.def("batchmatmulv2_mindie_sd(Tensor input_x1, Tensor input_x2, Tensor? bias=None, Tensor? offset_w=None, \
-        bool? adj_x1=False, bool? adj_x2=False, int? offset_x=0) \
-        -> Tensor");
     m.def("adaln_mindie_sd(Tensor x, Tensor scale, Tensor shift, Tensor? weight=None, \
         Tensor? bias=None, float? epsilon=1e-5) \
         -> Tensor");
@@ -54,6 +40,13 @@ TORCH_LIBRARY(mindie, m)
         int[]? actual_seq_kvlen=None, Tensor? block_table=None, str q_input_layout='TND', str kv_input_layout='TND', \
         int head_num=1, int mask_type=0, float scale=1.0, \
         int inner_precise=1, int block_size=0) -> (Tensor, Tensor)");
+    m.def("block_sparse_attention(Tensor query, Tensor key,  \
+        Tensor value, Tensor sparse_mask, Tensor sparse_count_table,  \
+        str input_layout='BNSD', int sparse_size=128, int num_heads=1, \
+        int num_key_value_heads=1, float scale_value=1,  \
+        bool causal=True, int inner_precise=1, int pre_tokens=214748647, int next_tokens=0, \
+        int[]? actual_seq_lengths=None, int[]? actual_seq_lengths_kv=None)   \
+        -> Tensor");
     m.def("sparse_block_estimate_mindie_sd(Tensor query, Tensor key,  \
         int[]? actual_seq_lengths=None, int[]? actual_seq_lengths_kv=None,  \
         str input_layout='BNSD', int stride=8, int sparse_size=128,  \
@@ -68,12 +61,9 @@ TORCH_LIBRARY_IMPL(mindie, PrivateUse1, m)
 {
     m.impl("rope_mindie_sd", &rope_mindie_sd_impl_npu);
     m.impl("la_mindie_sd", &la_mindie_sd_impl_npu);
-    m.impl("matmulv2_mindie_sd", &matmulv2_mindie_sd_impl_npu);
-    m.impl("batchmatmulv3_mindie_sd", &batchmatmulv3_mindie_sd_impl_npu);
-    m.impl("batchmatmulv3duo_mindie_sd", &batchmatmulv3duo_mindie_sd_impl_npu);
-    m.impl("batchmatmulv2_mindie_sd", &batchmatmulv2_mindie_sd_impl_npu);
     m.impl("adaln_mindie_sd", &adaln_mindie_sd_impl_npu);
     m.impl("la_preprocess_mindie_sd", &la_preprocess_mindie_sd_impl_npu);
     m.impl("rainfusionattention_mindie_sd", &rainfusionattention_mindie_sd_impl_npu);
+    m.impl("block_sparse_attention", &block_sparse_attention_impl_npu);
     m.impl("sparse_block_estimate_mindie_sd", &sparse_block_estimate_mindie_sd_impl_npu);
 }
