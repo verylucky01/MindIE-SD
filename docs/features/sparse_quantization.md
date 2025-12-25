@@ -38,7 +38,6 @@
         model = quantize(model, "步骤2导出的quant json path")
         ```
       >- **说明：** 
-      >- 对于FA量化，要求被FA量化的类中持有inner\_dim和heads属性。
       >- 模型自行加载原始权重，并完成实例初始化，quantize由插件提供，在接口中对相应层进行量化转换。
       >- 模型可以选择在quantize转换完后再使用to npu。 
       - 如果使用时间步量化，在quantize中还需要传入TimestepPolicyConfig，量化转换后还需要使用TimestepManager在模型中设置时间步信息，示例如下：
@@ -57,26 +56,6 @@
                     if self.do_classifier_free_guidance
                     else latents
                 )
-        ```
-      - 如果使用FA量化，量化转换后还需要手动使用QuantFA在模型的transformer block中修改FA的调用逻辑，例如fa3会在量化转换后自动生成：
-
-        ```python
-        if hasattr(attn, "fa3") and query.shape[0] == key.shape[0]:
-            seq_len = [query.shape[0]]*query.shape[1]
-            query = rearrange(query, "s b (n d) -> (b s) n d", d=head_dim, b=1)
-            key = rearrange(key, "s b (n d) -> (b s) n d", d=head_dim, b=1)
-            value = rearrange(value, "s b (n d) -> (b s) n d", d=head_dim, b=1)
-            hidden_states = attn.fa3.forward(query, key, value, seq_len)
-            hidden_states = rearrange(hidden_states, "(b s) n d -> s b (n d)", d=head_dim, b=1)
-        else:
-            query = rearrange(query, "s b (n d) -> b n s d", d=head_dim) # BNSD
-            key = rearrange(key, "s b (n d) -> b n s d", d=head_dim) # BNSD
-            value = rearrange(value, "s b (n d) -> b n s d", d=head_dim) # BNSD
-            hidden_states = torch_npu.npu_fusion_attention(query, key, value,
-                                                        atten_mask=attention_mask,
-                                                        input_layout="BNSD",
-                                                        scale=1 / math.sqrt(head_dim),
-                                                        head_num=attn.heads // sp_size)[0]
         ```
 
 ---
