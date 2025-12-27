@@ -109,6 +109,9 @@ output_list = [torch.empty_like(in_list[0]) for _ in range(world_size)]
 dist.all_to_all(output_list, in_list)
 x = torch.cat(output_list, dim=2).contiguous()
 x = x.reshape(batch, seqlen_chunk, hiddensize)
+
+# 4、对seqlen维度进行all_gather操作
+x = dist.all_gather(x, dim=1)
 ```
 
 
