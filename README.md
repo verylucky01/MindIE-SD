@@ -40,7 +40,7 @@
 
 2.  安装模型所需依赖并执行推理。
 
-    在任意路径下载 Wan2.1 模型仓，并安装所需依赖，进行推理。用户可根据需要自行设置权重路径（例：/home/{用户名}/Wan2.1-T2V-14B）和推理脚本中的模型参数，参数解释详情请参见[参数配置](./examples/wan/parameter_config.md)。
+    在任意路径下载 Wan2.1 模型仓，并安装所需依赖。在 MindIE SD 代码路径下进行推理。用户可根据需要自行设置权重路径（例：/home/{用户名}/Wan2.1-T2V-14B）和推理脚本中的模型参数，参数解释详情请参见[参数配置](./examples/wan/parameter_config.md)。
 
     ```bash
     git clone https://modelers.cn/MindIE/Wan2.1.git && cd Wan2.1

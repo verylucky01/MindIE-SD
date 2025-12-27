@@ -8,7 +8,7 @@
 
 1. 安装驱动固件
 
-宿主机需要确保安装过NPU驱动和固件。如未安装，请参见《CANN 软件安装指南》中的“选择安装场景”章节或“选择安装场景”章节（社区版），根据安装方式、操作系统、业务场景选择安装场景，选择完成后单击“开始阅读”，按“安装NPU驱动和固件”章节进行安装。
+宿主机需要确保安装过NPU驱动和固件。如未安装，请参见[《CANN 软件安装指南》](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha002/softwareinst/instg/instg_quick.html?Mode=PmIns&OS=openEuler&Software=cannToolKit)中的“选择安装场景”章节或“选择安装场景”章节（社区版），根据安装方式、操作系统、业务场景选择安装场景，选择完成后单击“开始阅读”，按“安装NPU驱动和固件”章节进行安装。
 
 -   安装方式：选择“在物理机上安装”。
 -   操作系统：选择使用的操作系统，MindIE支持的操作系统请参考硬件配套和支持的操作系统。
@@ -28,7 +28,7 @@
 
 3. 使用镜像
 
-执行以下命令启动容器，容器启动命令仅供参考，可根据需求自行修改。
+执行以下命令启动容器，容器启动命令仅供参考，可根据实际情况自行修改容器名称、镜像名称、挂载路径等。
 ```
 docker run -it -d --net=host --shm-size=1g \
     --name <container-name> \
@@ -77,7 +77,7 @@ export CPLUS_INCLUDE_PATH=/usr/include/c++/12/:/usr/include/c++/12/aarch64-openE
 
 1. 安装驱动固件
 
-宿主机需要确保安装过NPU驱动和固件。如未安装，请参见《CANN 软件安装指南》中的“选择安装场景”章节或“选择安装场景”章节（社区版），根据安装方式、操作系统、业务场景选择安装场景，选择完成后单击“开始阅读”，按“安装NPU驱动和固件”章节进行安装。
+宿主机需要确保安装过NPU驱动和固件。如未安装，请参见[《CANN 软件安装指南》](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha002/softwareinst/instg/instg_quick.html?Mode=PmIns&OS=openEuler&Software=cannToolKit)中的“选择安装场景”章节或“选择安装场景”章节（社区版），根据安装方式、操作系统、业务场景选择安装场景，选择完成后单击“开始阅读”，按“安装NPU驱动和固件”章节进行安装。
 
 -   安装方式：选择“在物理机上安装”。
 -   操作系统：选择使用的操作系统，MindIE支持的操作系统请参考硬件配套和支持的操作系统。
@@ -93,7 +93,7 @@ export CPLUS_INCLUDE_PATH=/usr/include/c++/12/:/usr/include/c++/12/aarch64-openE
 -   CANN Kernels算子包
 -   CANN NNAL神经网络加速库（可选）
 
-请参见《CANN 软件安装指南》中的“选择安装场景”章节或“选择安装场景”章节（社区版），根据安装方式、操作系统、业务场景选择安装场景，选择完成后单击“开始阅读”，按“安装CANN（物理机场景） \> 安装CANN软件包”章节进行安装。
+请参见[《CANN 软件安装指南》](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha002/softwareinst/instg/instg_quick.html?Mode=PmIns&OS=openEuler&Software=cannToolKit)中的“选择安装场景”章节或“选择安装场景”章节（社区版），根据安装方式、操作系统、业务场景选择安装场景，选择完成后单击“开始阅读”，按“安装CANN（物理机场景） \> 安装CANN软件包”章节进行安装。
 
 -   安装方式：选择“在物理机上安装”。
 -   操作系统：选择使用的操作系统。
@@ -114,19 +114,18 @@ export CPLUS_INCLUDE_PATH=/usr/include/c++/12/:/usr/include/c++/12/aarch64-openE
 请参见《Ascend Extension for PyTorch 软件安装指南》中的“[安装PyTorch](https://www.hiascend.com/document/detail/zh/Pytorch/720/configandinstg/instg/insg_0004.html)”章节安装PyTorch框架。
 请参见《Ascend Extension for PyTorch 软件安装指南》中的“[（可选）安装扩展模块](https://www.hiascend.com/document/detail/zh/Pytorch/720/configandinstg/instg/insg_0008.html)”章节安装torch_npu插件。
 
+> **说明：** 
+>若镜像环境中没有gcc、g++，请用户自行安装，并导入头文件路径
+>```
+>yum install gcc g++ -y
+>export CPLUS_INCLUDE_PATH=/usr/include/c++/12/:/usr/include/c++/12/aarch64-openEuler-linux/:$CPLUS_INCLUDE_PATH
+>```
+
 4. 安装其他环境依赖
 
 -   使用模型进行推理前需要安装对应的依赖，根据Modelers/Modelzoo仓上模型README，进行相关依赖的安装。
 ```
 pip install -r requirements.txt
-```
-
--   安装gcc、g++
-
-若镜像环境中没有gcc、g++，请用户自行安装，并导入头文件路径
-```
-yum install gcc g++ -y
-export CPLUS_INCLUDE_PATH=/usr/include/c++/12/:/usr/include/c++/12/aarch64-openEuler-linux/:$CPLUS_INCLUDE_PATH
 ```
 
 5. 安装MindIE SD
@@ -153,7 +152,7 @@ source /usr/local/Ascend/ascend-toolkit/set_env.sh
 
 4）输入命令验证是否安装成功
 ```
-python3 -c “import torch, torch_npu, mindiesd"
+python3 -c “import torch, torch_npu, mindiesd; print(torch_npu.npu.is_available())"
 ```
 
 方式二：源码编译安装
@@ -163,6 +162,12 @@ python3 -c “import torch, torch_npu, mindiesd"
 git clone https://gitcode.com/Ascend/MindIE-SD.git && cd MindIE-SD
 python setup.py bdist_wheel
 ```
+
+> **说明：** 
+>若环境中没有wheel等依赖，请用户自行安装
+>```
+>pip install wheel
+>```
 
 -   方式一：常规安装（使用默认版本号）
 ```
