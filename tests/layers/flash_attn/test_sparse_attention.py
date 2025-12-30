@@ -40,14 +40,14 @@ class TestSparseAttention(unittest.TestCase):
         self.k = torch.randn(kv_shape, dtype=torch.float16, device=self.device)
         self.v = torch.randn(kv_shape, dtype=torch.float16, device=self.device)
 
-    def test_rf_v3(self):
+    def test_rf_v2(self):
         out = sparse_attention(
             self.q, self.k, self.v,
             scale=self.scale,
             head_num=self.head,
             input_layout="BSND",
             inner_precise=0,
-            sparse_type="rf_v3",
+            sparse_type="rf_v2",
             txt_len=0,
             latent_shape_q=(self.t, self.h, self.w),
             latent_shape_k=(self.t, self.h, self.w),
@@ -68,14 +68,14 @@ class TestSparseAttention(unittest.TestCase):
         )
         self.assertIsNotNone(out)
     
-    def test_rf_v3_result(self):
+    def test_rf_v2_result(self):
         out = sparse_attention(
             self.q, self.k, self.v,
             scale=self.scale,
             head_num=self.head,
             input_layout="BSND",
             inner_precise=0,
-            sparse_type="rf_v3",
+            sparse_type="rf_v2",
             txt_len=0,
             latent_shape_q=(self.t, self.h, self.w),
             latent_shape_k=(self.t, self.h, self.w),

@@ -14,7 +14,7 @@
 from typing import Optional
 import torch
 import torch_npu
-from .sparse_flash_attn_rf_v3 import (
+from .sparse_flash_attn_rf_v2 import (
     rain_fusion_attention,
     get_blockwise_mask,
     do_tensor_inv_rearrange,
@@ -28,9 +28,9 @@ MAX_TOKEN = 2147483647
 def check_params(input_layout, sparse_type):
     if input_layout not in ['BSND', 'BNSD']:
         raise ParametersInvalid(f"The input_layout must in ['BSND', 'BNSD'], but got {input_layout}.")
-    if sparse_type == "rf_v3":
+    if sparse_type == "rf_v2":
         if input_layout != "BSND":
-            raise ParametersInvalid(f"When sparse_type is 'rf_v3', the input_layout must be 'BSND', \
+            raise ParametersInvalid(f"When sparse_type is 'rf_v2', the input_layout must be 'BSND', \
                                     but got {input_layout}.")
 
 
@@ -80,15 +80,15 @@ def sparse_attention(
         inner_precise (int, default to 0):
             0 represents high-precision; 1 represents high-performance.
         sparse_type (str, default to None):
-            Sparse type, only supports: 'rf_v3', 'ada_bsa'.
+            Sparse type, only supports: 'rf_v2', 'ada_bsa'.
         txt_len:
-            Length of text sequence. Only takes effect when sparse_type is 'rf_v3'.
+            Length of text sequence. Only takes effect when sparse_type is 'rf_v2'.
         block_size (int, default to 128):
             Only supports 128.
         latent_shape_q (list, default to None):
-            (t, h, w), t**h*w = qseqlen. Only takes effect when sparse_type is 'rf_v3'.
+            (t, h, w), t**h*w = qseqlen. Only takes effect when sparse_type is 'rf_v2'.
         latent_shape_k (list, default to None):
-            (t, h, w), t**h*w = kseqlen. Only takes effect when sparse_type is 'rf_v3'.
+            (t, h, w), t**h*w = kseqlen. Only takes effect when sparse_type is 'rf_v2'.
         keep_sink (bool, default to True):
             Only takes effect when sparse_type ims 'ada_bsa'.
         keep_recent (bool, default to True):
@@ -102,7 +102,7 @@ def sparse_attention(
     head_dim = q.shape[-1]
     scale = head_dim ** -0.5 if scale is None else scale
 
-    if sparse_type == "rf_v3":
+    if sparse_type == "rf_v2":
         q, k, v, qkv_pool = do_tensor_rearrange_pooling(q, k, v, txt_len, block_size, latent_shape_q, latent_shape_k)
         select_idx, select_num_idx = get_blockwise_mask(
                 qkv_pool, txt_len, sparsity, scale, block_size, latent_shape_q, latent_shape_k)
