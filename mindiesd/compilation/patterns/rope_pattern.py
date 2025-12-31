@@ -21,6 +21,12 @@ if npu_available:
 
 
 def create(dtype):
+    if "2.6.0" in torch.__version__:
+        _dtype_cast_func = torch.ops.npu.npu_dtype_cast.default
+    else:
+        _dtype_cast_func = torch.ops.npu._npu_dtype_cast.default
+    
+    
     class RopePattern(PatternBase):
         @staticmethod
         def name():
@@ -42,8 +48,8 @@ def create(dtype):
                     cos_part = x * cos
                     sin_part = x_rotated * sin
                 else:
-                    cos_part = torch.ops.npu._npu_dtype_cast.default(x, dtype) * cos
-                    sin_part = torch.ops.npu._npu_dtype_cast.default(x_rotated, dtype) * sin
+                    cos_part = _dtype_cast_func(x, dtype) * cos
+                    sin_part = _dtype_cast_func(x_rotated, dtype) * sin
                 x_out = cos_part + sin_part
                 x_out.type_as(x)
                 return x_out
