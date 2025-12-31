@@ -23,7 +23,6 @@ __all__ = [
     'quantize',
     'TimestepManager',
     'TimestepPolicyConfig',
-    'QuantFA',
     'sparse_attention'
 ]
 
@@ -37,7 +36,7 @@ from .layers import (
     RMSNorm,
     sparse_attention
 )
-from .quantization import quantize, TimestepManager, TimestepPolicyConfig, QuantFA
+from .quantization import quantize, TimestepManager, TimestepPolicyConfig
 from .env import set_environment_variables
 
 

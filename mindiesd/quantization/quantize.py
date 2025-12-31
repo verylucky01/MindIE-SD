@@ -22,7 +22,7 @@ from .mode import QuantAlgorithm
 from .config import QuantConfig, LayerQuantConfig, TimestepPolicyConfig
 from .mode import W8A8_LIST
 from .utils import replace_rank_suffix, get_quant_weight, extract_constructor_args, MAX_WEIGHT_SIZE
-from .layer import W8A8QuantLinear, W8A8TimeStepQuantLinear, WeightQuantLinear, QuantFA, W8A8MXFP8QuantLinear
+from .layer import W8A8QuantLinear, W8A8TimeStepQuantLinear, WeightQuantLinear, W8A8MXFP8QuantLinear
 from ..utils import ParametersInvalid, ConfigError
 from ..utils import file_utils
 from ..utils.logs.logging import logger
@@ -142,16 +142,6 @@ def smooth_quantize(name, layer, cfg, quant_weights, **kwargs):
     if cfg.quant_algo in W8A8_LIST:
         return smooth_quantize_w8a8(name, layer, cfg, quant_weights, **kwargs)
     return layer, False
-
-
-def add_fa3(layer, cfg, prefix, quant_weights, **kwargs):
-    # 检查layer是否具有必要的属性
-    if not hasattr(layer, 'heads') or not hasattr(layer, 'inner_dim'):
-        logger.warning(f"Layer is missing required heads or inner_dim attributes, cannot add QuantFA quantization")
-        return
-    dtype = kwargs.get('dtype', torch.bfloat16)
-    layer.fa3 = QuantFA(layer.heads, layer.inner_dim, prefix, quant_weights, dtype=dtype)
-    return
 
 
 def get_layer_quant_mode(name, layer, cfg):
@@ -323,9 +313,6 @@ def quantize(model, quant_des_path, **kwargs):
             if is_modified:
                 logger.debug(f"Weight Quant layer name:%s, Quant class name:%s.", name, quant_layer.__class__.__name__)
                 modified_layers.append((name, quant_layer))
-        elif layer_quant_mode.contains_fa_quantization():
-            add_fa3(layer, layer_quant_cfg, name, quant_weights, **kwargs)
-            logger.debug(f"FA Quant layer name:%s, Quant class name:%s.", name, layer.__class__.__name__)
 
     # 执行改图
     modify_graph(model, modified_layers)

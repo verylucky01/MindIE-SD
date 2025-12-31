@@ -180,6 +180,7 @@ public:
             .ExtendCfgInfo("aclnnSupport.value", "support_aclnn")   // set value of aclnn support
             .ExtendCfgInfo("jitCompile.flag", "static_false,dynamic_false"); // set jit compile flag
         this->AICore().AddConfig("ascend910b");
+        this->AICore().AddConfig("ascend910_93");
     }
 };
 

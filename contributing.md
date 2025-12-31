@@ -65,7 +65,7 @@ MindIE-SD 社区基于 GitCode 提供的Issue管理功能，完整记录每一�
 
 -   将代码仓Fork到您的个人账户
 -   克隆个人仓库到本地环境
--   在本地分支进行代码、文档等修改
+-   在本地dev分支进行代码、文档等修改
 
 2）本地验证
 
@@ -74,7 +74,7 @@ MindIE-SD 社区基于 GitCode 提供的Issue管理功能，完整记录每一�
 
 3）提交Pull-Request
 
--   代码验证通过后，提交PR到MindIE SD开源项目
+-   代码验证通过后，提交PR到MindIE SD开源项目的dev分支
 -   参照[社区评论命令](https://gitcode.com/cann/community/blob/master/docs/robot/cann/robot-command.md)中的对应命令触发门禁测试
 
 4）代码审查
@@ -84,4 +84,4 @@ MindIE-SD 社区基于 GitCode 提供的Issue管理功能，完整记录每一�
 
 5）代码合入
 
--   PR 审查通过后，代码将合入MindIE SD开源项目。
+-   PR 审查通过后，代码将合入MindIE SD开源项目的dev分支，并最终合入master分支。

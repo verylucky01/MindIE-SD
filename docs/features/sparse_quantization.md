@@ -9,11 +9,11 @@
 
 - 本章节以PTQ量化为主，主要分为以下几种类型：
     
-    （1）动态量化：仅量化权重，在推理时动态计算量化因子，精度损失小，无需校准数据，但是由于每批输入都要计算缩放，所以计算开销大。数据类型有：INT8/FP8/W8A8/INT4/MXFP4/W4A4。
+    （1）动态量化：仅离线量化权重，在推理时动态计算激活值的量化因子。
     
-    （2）静态量化：权重和激活值都需要量化，推理时需要校准数据，跑模型forward提取每一个待量化层的输入，使用统计数据来量化激活值。数据类型有：INT8/W8A8/INT4/W4A4。
+    （2）静态量化：权重和激活值都是离线量化。
     
-    （3）Time-aware量化：根据时间维度动态调整量化策略。数据类型有：INT8/W8A8。
+    （3）Time-aware量化：根据时间维度动态调整量化策略。
 
 下图展示了INT8量化示例，将FP32（32位浮点数）映射到INT8（8位整数）。其中[-max(|xf|), max(|xf|)]是量化前浮点数值的数据范围，[-128,127]是量化后的数据范围。
 
@@ -38,7 +38,6 @@
         model = quantize(model, "步骤2导出的quant json path")
         ```
       >- **说明：** 
-      >- 对于FA量化，要求被FA量化的类中持有inner\_dim和heads属性。
       >- 模型自行加载原始权重，并完成实例初始化，quantize由插件提供，在接口中对相应层进行量化转换。
       >- 模型可以选择在quantize转换完后再使用to npu。 
       - 如果使用时间步量化，在quantize中还需要传入TimestepPolicyConfig，量化转换后还需要使用TimestepManager在模型中设置时间步信息，示例如下：
@@ -57,26 +56,6 @@
                     if self.do_classifier_free_guidance
                     else latents
                 )
-        ```
-      - 如果使用FA量化，量化转换后还需要手动使用QuantFA在模型的transformer block中修改FA的调用逻辑，例如fa3会在量化转换后自动生成：
-
-        ```python
-        if hasattr(attn, "fa3") and query.shape[0] == key.shape[0]:
-            seq_len = [query.shape[0]]*query.shape[1]
-            query = rearrange(query, "s b (n d) -> (b s) n d", d=head_dim, b=1)
-            key = rearrange(key, "s b (n d) -> (b s) n d", d=head_dim, b=1)
-            value = rearrange(value, "s b (n d) -> (b s) n d", d=head_dim, b=1)
-            hidden_states = attn.fa3.forward(query, key, value, seq_len)
-            hidden_states = rearrange(hidden_states, "(b s) n d -> s b (n d)", d=head_dim, b=1)
-        else:
-            query = rearrange(query, "s b (n d) -> b n s d", d=head_dim) # BNSD
-            key = rearrange(key, "s b (n d) -> b n s d", d=head_dim) # BNSD
-            value = rearrange(value, "s b (n d) -> b n s d", d=head_dim) # BNSD
-            hidden_states = torch_npu.npu_fusion_attention(query, key, value,
-                                                        atten_mask=attention_mask,
-                                                        input_layout="BNSD",
-                                                        scale=1 / math.sqrt(head_dim),
-                                                        head_num=attn.heads // sp_size)[0]
         ```
 
 ---

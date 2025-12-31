@@ -343,3 +343,15 @@ def block_sparse_attention_fake(
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     output = torch.empty_like(query)
     return output
+
+
+@register_ops.register_mindie_fake_op("adaln_mindie_sd")
+def adaln_mindie_sd_fake(
+    x: torch.Tensor,
+    scale: torch.Tensor,
+    shift: torch.Tensor,
+    weight: torch.Tensor | None = None,
+    bias: torch.Tensor | None = None,
+    epsilon: float = 1e-05
+) -> torch.Tensor:
+    return torch.empty_like(x)

@@ -13,4 +13,3 @@
 from .quantize import quantize
 from .utils import TimestepManager
 from .config import TimestepPolicyConfig
-from .layer import QuantFA

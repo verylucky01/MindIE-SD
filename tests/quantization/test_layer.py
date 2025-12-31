@@ -18,7 +18,6 @@ import torch_npu
 
 from mindiesd.quantization.layer import W8A8QuantLinear, WeightQuantLinear, W8A8TimeStepQuantLinear, \
     W8A8MXFP8QuantLinear
-from mindiesd.quantization.layer import QuantFA
 from mindiesd.quantization.mode import QuantAlgorithm
 from mindiesd.quantization.utils import get_quant_weight, TimestepManager
 
@@ -350,128 +349,7 @@ class TestQuantLinearBFloat16(unittest.TestCase):
         self.assertIsInstance(output, torch.Tensor)
 
 
-class TestFA3Float16(unittest.TestCase):
-    def setUp(self):
-        self.stream = torch_npu.npu.current_stream()
-        self.weights = {
-            "test_layer.fa_q.scale": torch.ones(8, 1, dtype=torch.float16),
-            "test_layer.fa_k.scale": torch.ones(8, 1, dtype=torch.float16),
-            "test_layer.fa_v.scale": torch.ones(8, 1, dtype=torch.float16),
-            "test_layer.fa_q.offset": torch.ones(8, 1, dtype=torch.float16),
-            "test_layer.fa_k.offset": torch.ones(8, 1, dtype=torch.float16),
-            "test_layer.fa_v.offset": torch.ones(8, 1, dtype=torch.float16)
-        }
-        # Mock torch_atb.Operation to avoid hardware dependencies
-        self.operation_patcher = mock.patch('torch_atb.Operation')
-        self.mock_operation = self.operation_patcher.start()
-        # Configure the mock to return a callable with a forward method
-        self.mock_operation_instance = mock.MagicMock()
-        self.mock_operation_instance.forward.return_value = [torch.ones(32, 8, 16, dtype=torch.bfloat16).npu()]
-        self.mock_operation.return_value = self.mock_operation_instance
 
-    def tearDown(self):
-        self.operation_patcher.stop()
-
-    def test_init(self):
-        # Test initializing QuantFA with valid parameters
-        fa3 = QuantFA(ori_head_num=8, ori_inner_dim=64, prefix="test_layer",
-            quant_weights=create_mock_handler(self.weights), dtype=torch.float16).npu()
-        
-        # Verify attributes are set correctly
-        self.assertEqual(fa3.q_scale.shape, (8, 1))
-        self.assertEqual(fa3.k_scale.shape, (8, 1))
-        self.assertEqual(fa3.v_scale.shape, (8, 1))
-        self.assertEqual(fa3.q_offset.shape, (8, 1))
-        self.assertEqual(fa3.k_offset.shape, (8, 1))
-        self.assertEqual(fa3.v_offset.shape, (8, 1))
-        self.assertEqual(fa3.dtype, torch.float16)
-        
-        # Verify torch_atb.Operation was called the expected number of times
-        self.assertEqual(self.mock_operation.call_count, 4)
-
-    def test_forward(self):
-        # Test forward pass of QuantFA
-        fa3 = QuantFA(ori_head_num=8, ori_inner_dim=64, prefix="test_layer",
-            quant_weights=create_mock_handler(self.weights)).npu()
-        
-        # Create test inputs
-        query = torch.randn(32, 8, 8, dtype=torch.float16).npu()
-        key = torch.randn(32, 8, 8, dtype=torch.float16).npu()
-        value = torch.randn(32, 8, 8, dtype=torch.float16).npu()
-        seq_len = [32]
-        
-        # Call forward method
-        output = fa3.forward(query, key, value, seq_len)
-        self.stream.synchronize()
-        
-        # Verify output shape and type
-        self.assertEqual(output.shape, (32, 8, 16))
-        self.assertIsInstance(output, torch.Tensor)
-        
-        # Verify quant operations were called
-        self.assertEqual(self.mock_operation_instance.forward.call_count, 4)
-
-
-class TestFA3BFloat16(unittest.TestCase):
-    def setUp(self):
-        self.stream = torch_npu.npu.current_stream()
-        self.weights = {
-            "test_layer.fa_q.scale": torch.ones(8, 1, dtype=torch.bfloat16),
-            "test_layer.fa_k.scale": torch.ones(8, 1, dtype=torch.bfloat16),
-            "test_layer.fa_v.scale": torch.ones(8, 1, dtype=torch.bfloat16),
-            "test_layer.fa_q.offset": torch.ones(8, 1, dtype=torch.bfloat16),
-            "test_layer.fa_k.offset": torch.ones(8, 1, dtype=torch.bfloat16),
-            "test_layer.fa_v.offset": torch.ones(8, 1, dtype=torch.bfloat16)
-        }
-        # Mock torch_atb.Operation to avoid hardware dependencies
-        self.operation_patcher = mock.patch('torch_atb.Operation')
-        self.mock_operation = self.operation_patcher.start()
-        # Configure the mock to return a callable with a forward method
-        self.mock_operation_instance = mock.MagicMock()
-        self.mock_operation_instance.forward.return_value = [torch.ones(32, 8, 16, dtype=torch.bfloat16).npu()]
-        self.mock_operation.return_value = self.mock_operation_instance
-
-    def tearDown(self):
-        self.operation_patcher.stop()
-
-    def test_init(self):
-        # Test initializing QuantFA with valid parameters
-        fa3 = QuantFA(ori_head_num=8, ori_inner_dim=64, prefix="test_layer",
-            quant_weights=create_mock_handler(self.weights)).npu()
-        
-        # Verify attributes are set correctly
-        self.assertEqual(fa3.q_scale.shape, (8, 1))
-        self.assertEqual(fa3.k_scale.shape, (8, 1))
-        self.assertEqual(fa3.v_scale.shape, (8, 1))
-        self.assertEqual(fa3.q_offset.shape, (8, 1))
-        self.assertEqual(fa3.k_offset.shape, (8, 1))
-        self.assertEqual(fa3.v_offset.shape, (8, 1))
-        self.assertEqual(fa3.dtype, torch.bfloat16)
-        
-        # Verify torch_atb.Operation was called the expected number of times
-        self.assertEqual(self.mock_operation.call_count, 4)
-
-    def test_forward(self):
-        # Test forward pass of QuantFA
-        fa3 = QuantFA(ori_head_num=8, ori_inner_dim=64, prefix="test_layer",
-            quant_weights=create_mock_handler(self.weights)).npu()
-        
-        # Create test inputs
-        query = torch.randn(32, 8, 8, dtype=torch.bfloat16).npu()
-        key = torch.randn(32, 8, 8, dtype=torch.bfloat16).npu()
-        value = torch.randn(32, 8, 8, dtype=torch.bfloat16).npu()
-        seq_len = [32]
-        
-        # Call forward method
-        output = fa3.forward(query, key, value, seq_len)
-        self.stream.synchronize()
-        
-        # Verify output shape and type
-        self.assertEqual(output.shape, (32, 8, 16))
-        self.assertIsInstance(output, torch.Tensor)
-        
-        # Verify quant operations were called
-        self.assertEqual(self.mock_operation_instance.forward.call_count, 4)
 
 
 class TestWeightQuantLinearBFloat16(unittest.TestCase):
