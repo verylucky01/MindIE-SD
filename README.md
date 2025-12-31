@@ -15,6 +15,7 @@
 
 ## Latest News
 
+-   31/25/2025: MindIE SD提供稀疏Attention计算能力
 -   12/25/2025：vLLM Omni x MindIE SD 实现 Qwen-Image-Edit-2511 / Qwen-Image-Layered 昇腾原生高性能推理
 -   11/30/2025：MindIE SD 正式宣布开源并面向公众开放！[会议日历](https://meeting.ascend.osinfra.cn/?sig=sig-MindIE-SD)
 
