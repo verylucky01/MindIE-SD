@@ -10,11 +10,13 @@
 
 import unittest
 import time
+import sys
 import torch
 import torch_npu
-
+sys.path.append('../')
 from mindiesd import attention_forward_varlen
 from mindiesd.utils.exception import ParametersInvalid
+from tests.utils.utils.precision_compare import data_compare
 
 MAX_TOKEN = 2147483647
 
@@ -113,23 +115,8 @@ class TestAttentionForwardVarlen(unittest.TestCase):
 
         # 参考实现
         out_ref = self._get_bsnd_result(q, k, v, cu_seqlens_q, cu_seqlens_k, causal=causal)
-
-        # 误差分析
-        out_flat = out.to("cpu").float().reshape(-1)
-        ref_flat = out_ref.to("cpu").float().reshape(-1)
-        cosine_sim = torch.cosine_similarity(out_flat.unsqueeze(0), ref_flat.unsqueeze(0))[0].item()
-        delta = (out - out_ref).abs()
-        max_error = delta.max().item()
-        mean_error = delta.mean().item()
-
-        print(f"cosine_sim_vs_ref = {cosine_sim:.6f}")
-        print(f"max_error = {max_error:.6f}")
-        print(f"mean_error = {mean_error:.6f}")
-
-        self.assertGreaterEqual(cosine_sim, 0.999, f"Cosine similarity too low: {cosine_sim} < 0.999")
-        self.assertLessEqual(max_error, 0.003, f"Max error too high: {max_error} > 0.003")
-        self.assertLessEqual(mean_error, 0.003, f"Mean error too high: {mean_error} > 0.003")
-        self._check_output(out, cu_seqlens_q[-1], msg=f"{test_name} (causal={causal})")
+        result, _, max_err = data_compare(out.cpu(), out_ref.cpu())
+        self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
 
     def _test_performance(self, q, k, v, cu_seqlens_q, cu_seqlens_k, test_name):
         """测试性能：对比自研 vs npu_fusion_attention"""

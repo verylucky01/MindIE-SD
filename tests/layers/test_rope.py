@@ -19,6 +19,7 @@ sys.path.append('../')
 from mindiesd.layers.rope import rotary_position_embedding
 from mindiesd.utils import ParametersInvalid
 from tests.utils.utils.embedding import RotaryPositionEmbedding
+from tests.utils.utils.precision_compare import data_compare
 
 
 class TestRope(unittest.TestCase):
@@ -181,9 +182,8 @@ class TestRope(unittest.TestCase):
                         rotated_mode="rotated_half", head_first=True, fused=True)
                     self.assertEqual(rope_rotated_half.shape, rope_rotated_half_fused.shape)
 
-                    rope_rotated_half = rope_rotated_half.reshape(1, -1).to(torch.float32)
-                    rope_rotated_half_fused = rope_rotated_half_fused.reshape(1, -1).to(torch.float32)
-                    self.assertGreater(torch.cosine_similarity(rope_rotated_half, rope_rotated_half_fused)[0], 0.999)
+                    result, _, max_err = data_compare(rope_rotated_half.cpu(), rope_rotated_half_fused.cpu())
+                    self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
 
     def test_rope_rotated_interleaved_4d(self):
         device = "npu"
@@ -211,9 +211,8 @@ class TestRope(unittest.TestCase):
                         rotated_mode="rotated_interleaved", head_first=False, fused=True)
                     self.assertEqual(rope_rotated_half.shape, rope_rotated_half_fused.shape)
 
-                    rope_rotated_half = rope_rotated_half.reshape(1, -1).to(torch.float32)
-                    rope_rotated_half_fused = rope_rotated_half_fused.reshape(1, -1).to(torch.float32)
-                    self.assertGreater(torch.cosine_similarity(rope_rotated_half, rope_rotated_half_fused)[0], 0.999)
+                    result, _, max_err = data_compare(rope_rotated_half.cpu(), rope_rotated_half_fused.cpu())
+                    self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
 
     def test_rope_rotated_half_2d(self):
         device = "npu"
@@ -240,9 +239,8 @@ class TestRope(unittest.TestCase):
                         rotated_mode="rotated_half", head_first=True, fused=True)
                     self.assertEqual(rope_rotated_half.shape, rope_rotated_half_fused.shape)
 
-                    rope_rotated_half = rope_rotated_half.reshape(1, -1).to(torch.float32)
-                    rope_rotated_half_fused = rope_rotated_half_fused.reshape(1, -1).to(torch.float32)
-                    self.assertGreater(torch.cosine_similarity(rope_rotated_half, rope_rotated_half_fused)[0], 0.999)
+                    result, _, max_err = data_compare(rope_rotated_half.cpu(), rope_rotated_half_fused.cpu())
+                    self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
 
     def test_rope_rotated_interleaved_2d(self):
         device = "npu"
@@ -269,9 +267,8 @@ class TestRope(unittest.TestCase):
                         rotated_mode="rotated_interleaved", head_first=False, fused=True)
                     self.assertEqual(rope_rotated_half.shape, rope_rotated_half_fused.shape)
 
-                    rope_rotated_half = rope_rotated_half.reshape(1, -1).to(torch.float32)
-                    rope_rotated_half_fused = rope_rotated_half_fused.reshape(1, -1).to(torch.float32)
-                    self.assertGreater(torch.cosine_similarity(rope_rotated_half, rope_rotated_half_fused)[0], 0.999)
+                    result, _, max_err = data_compare(rope_rotated_half.cpu(), rope_rotated_half_fused.cpu())
+                    self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
 
 
 if __name__ == '__main__':

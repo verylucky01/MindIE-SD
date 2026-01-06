@@ -32,6 +32,7 @@ sys.path.append('../')
 from mindiesd.utils import ModelInitError, ParametersInvalid
 from tests.utils.utils.embedding import RotaryEmbedding, TimestepEmbedder, SizeEmbedder, \
     CombinedTimestepTextProjEmbeddings, PositionEmbedding2D, PatchEmbed, RotaryPositionEmbedding
+from tests.utils.utils.precision_compare import data_compare
 
 
 ACTIVATION_FUNCTIONS = {
@@ -677,8 +678,10 @@ class TestEmbedding(unittest.TestCase):
                     embedding_test1 = embedding_test1.reshape(1, -1).to(torch.float32)
                     embedding_test2 = embedding_test2.reshape(1, -1).to(torch.float32)
                     embedding = embedding.reshape(1, -1).to(torch.float32)
-                    self.assertGreater(torch.cosine_similarity(embedding, embedding_test1)[0], 0.999)
-                    self.assertGreater(torch.cosine_similarity(embedding, embedding_test2)[0], 0.999)
+                    result1, _, max_err1 = data_compare(embedding.cpu(), embedding_test1.cpu())
+                    result2, _, max_err2 = data_compare(embedding.cpu(), embedding_test2.cpu())[0]
+                    self.assertEqual(result1, "success", msg=f"Data compare failed. Max error is: {max_err1}")
+                    self.assertEqual(result2, "success", msg=f"Data compare failed. Max error is: {max_err2}")
 
     @torch.no_grad()
     def test_size_embedder(self):
@@ -702,7 +705,8 @@ class TestEmbedding(unittest.TestCase):
 
                     embedding_test = embedding_test.reshape(1, -1).to(torch.float32)
                     embedding = embedding.reshape(1, -1).to(torch.float32)
-                    self.assertGreater(torch.cosine_similarity(embedding, embedding_test)[0], 0.999)
+                    result, _, max_err = data_compare(embedding.cpu(), embedding_test.cpu())
+                    self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
     
     @torch.no_grad()
     def test_combined_timestep_text_porj_embedder(self):
@@ -731,7 +735,8 @@ class TestEmbedding(unittest.TestCase):
 
                     embedding_test = embedding_test.reshape(1, -1).to(torch.float32)
                     embedding = embedding.reshape(1, -1).to(torch.float32)
-                    self.assertGreater(torch.cosine_similarity(embedding, embedding_test)[0], 0.999)
+                    result, _, max_err = data_compare(embedding.cpu(), embedding_test.cpu())
+                    self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
 
     @torch.no_grad()
     def test_position_embedding2d_opensora(self):
@@ -754,7 +759,8 @@ class TestEmbedding(unittest.TestCase):
 
                     embedding_test = embedding_test.reshape(1, -1).to(torch.float32)
                     embedding = embedding.reshape(1, -1).to(torch.float32)
-                    self.assertGreater(torch.cosine_similarity(embedding, embedding_test)[0], 0.999)
+                    result, _, max_err = data_compare(embedding.cpu(), embedding_test.cpu())
+                    self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
 
     @torch.no_grad()
     def test_patch_embed_hunyuan(self):
@@ -777,7 +783,8 @@ class TestEmbedding(unittest.TestCase):
 
                     embedding_test = embedding_test.reshape(1, -1).to(torch.float32)
                     embedding = embedding.reshape(1, -1).to(torch.float32)
-                    self.assertGreater(torch.cosine_similarity(embedding, embedding_test)[0], 0.999)
+                    result, _, max_err = data_compare(embedding.cpu(), embedding_test.cpu())
+                    self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
 
     @torch.no_grad()
     def test_patch_embed_sd3(self):
@@ -802,7 +809,8 @@ class TestEmbedding(unittest.TestCase):
 
                         embedding_test = embedding_test.reshape(1, -1).to(torch.float32)
                         embedding = embedding.reshape(1, -1).to(torch.float32)
-                        self.assertGreater(torch.cosine_similarity(embedding, embedding_test)[0], 0.999)
+                        result, _, max_err = data_compare(embedding.cpu(), embedding_test.cpu())
+                        self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
 
     @torch.no_grad()
     def test_get_2d_rotary_pos_embed(self):
@@ -835,7 +843,8 @@ class TestEmbedding(unittest.TestCase):
 
                     embedding_test = embedding_test.reshape(1, -1).to(torch.float32)
                     embedding = embedding.reshape(1, -1).to(torch.float32)
-                    self.assertGreater(torch.cosine_similarity(embedding, embedding_test)[0], 0.999)
+                    result, _, max_err = data_compare(embedding.cpu(), embedding_test.cpu())
+                    self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
 
 
 if __name__ == '__main__':
