@@ -23,7 +23,7 @@
 
 详见[架构介绍](docs/architecture.md)（包含：关键特性，目录设计等）
 
-现已支持主流扩散模型，对于部分 diffusers 模型进行了昇腾硬件亲和的加速改造，模型归档在 [Modelers](https://modelers.cn/models?name=MindIE&page=1&size=16)/[ModelZoo](https://www.hiascend.com/software/modelzoo)，模型列表详见 [List of Supported Models](docs/architecture.md/table1198934616167)，也支持手动改造，详见 examples。
+现已支持主流扩散模型，对于部分 diffusers 模型进行了昇腾硬件亲和的加速改造，模型归档在 [Modelers](https://modelers.cn/models?name=MindIE&page=1&size=16)/[ModelZoo](https://www.hiascend.com/software/modelzoo)，模型列表详见 [List of Supported Models](docs/architecture.md#%E6%A8%A1%E5%9E%8B%E6%94%AF%E6%8C%81%E5%88%97%E8%A1%A8)，也支持手动改造，详见 examples。
 
 
 ## 快速开始
