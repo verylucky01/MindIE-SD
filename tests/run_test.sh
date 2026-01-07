@@ -12,17 +12,6 @@ export MINDIE_LOG_TO_STDOUT=true
 
 set -e
 
-# 修改test_models以及configs文件夹及子文件夹权限
-chmod -R 750 ./test_models/
-chmod -R 750 ./configs/ 
-
-# 设置config文件权限
-config_path_array=$(find . -name "*.json")
-for config_path in ${config_path_array[@]}
-do
-    chmod 640 $config_path
-done
-
 if command -v python3 &> /dev/null; then
     python_command=python3
 else

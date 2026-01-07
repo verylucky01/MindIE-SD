@@ -10,11 +10,11 @@
 # MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 # See the Mulan PSL v2 for more details.
 
+from mindiesd.utils.exception import ConfigError, ParametersInvalid
+from mindiesd.utils.logs.logging import logger
 from .cache import CacheConfig
 from .attention_cache import AttentionCache
 from .dit_block_cache import DiTBlockCache
-from ...utils.exception import ConfigError, ParametersInvalid
-from ...utils.logs.logging import logger
 
 
 CACHE_METHOD = {
