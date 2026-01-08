@@ -679,7 +679,7 @@ class TestEmbedding(unittest.TestCase):
                     embedding_test2 = embedding_test2.reshape(1, -1).to(torch.float32)
                     embedding = embedding.reshape(1, -1).to(torch.float32)
                     result1, _, max_err1 = data_compare(embedding.cpu(), embedding_test1.cpu())
-                    result2, _, max_err2 = data_compare(embedding.cpu(), embedding_test2.cpu())[0]
+                    result2, _, max_err2 = data_compare(embedding.cpu(), embedding_test2.cpu())
                     self.assertEqual(result1, "success", msg=f"Data compare failed. Max error is: {max_err1}")
                     self.assertEqual(result2, "success", msg=f"Data compare failed. Max error is: {max_err2}")
 

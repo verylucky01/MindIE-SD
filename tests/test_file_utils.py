@@ -165,8 +165,8 @@ class TestFileUtils(unittest.TestCase):
         os.chmod(self.path_test_file_permission, 0o777)
 
         # then check the file permission
-        file_utils.check_max_permission(self.path_test_file_permission, file_utils.CONFIG_FILE_PERMISSION)
-        self.assertIn("WARNING", self.string_io.getvalue().rstrip('\n'))
+        with self.assertRaises(PermissionError):
+            file_utils.check_max_permission(self.path_test_file_permission, file_utils.CONFIG_FILE_PERMISSION)
         # 清空StringIO
         self.string_io.truncate(0)
         self.string_io.seek(0)
@@ -187,8 +187,8 @@ class TestFileUtils(unittest.TestCase):
         os.chmod(self.path_test_under_dir, 0o750)
         os.chmod(self.path_test_under_dir_file, 0o777)
 
-        file_utils.check_file_under_dir(self.path_test_under_dir)
-        self.assertIn("WARNING", self.string_io.getvalue().rstrip('\n'))
+        with self.assertRaises(PermissionError):
+            file_utils.check_file_under_dir(self.path_test_under_dir)
         # 清空StringIO
         self.string_io.truncate(0)
         self.string_io.seek(0)
