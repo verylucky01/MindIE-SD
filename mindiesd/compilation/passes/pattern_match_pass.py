@@ -25,7 +25,22 @@ logger = logging.getLogger(__name__)
 torch_version = re.match(r"(\d+\.\d+)", torch.__version__).group(1)
 IS_TORCH_21 = torch_version == "2.1"
 if IS_TORCH_21:
-    from torch._inductor.pattern_matcher import inference_graph  # 2.1仅导入这个，替代fwd_only
+    def mindie_inference_graph(fn, args):
+        from torch.fx.experimental.proxy_tensor import make_fx
+        from torch._subclasses.fake_tensor import FakeTensor
+
+        decomp_table = select_custom_decomp_table()
+
+        def safe_to_copy(x, dtype=None, layout=None, device=None, pin_memory=False, non_blocking=False):
+            if isinstance(x, FakeTensor):
+                return x
+            return torch.ops.aten._to_copy.default(x, dtype, layout, device, pin_memory, non_blocking)
+
+        decomp_table[torch.ops.aten._to_copy.default] = safe_to_copy
+        gm = make_fx(fn, decomposition_table=decomp_table)(*args)
+        gm.graph.eliminate_dead_code()
+        gm.recompile()
+        return gm
 
 
 class PatternMatchPass(GraphModulePass):
@@ -38,7 +53,6 @@ class PatternMatchPass(GraphModulePass):
                 pass_name="pattern_match_pass"
             )
         except TypeError:
-            # 兼容不支持pass_name参数的旧版本
             self.pattern_pass: PatternMatcherPass = PatternMatcherPass()
 
     def __call__(self, graph: torch.fx.GraphModule) -> torch.fx.GraphModule:
@@ -81,7 +95,7 @@ class PatternMatchPass(GraphModulePass):
 
         if not hasattr(pm, "fwd_only"):
             if IS_TORCH_21:
-                pm.fwd_only = inference_graph
+                pm.fwd_only = mindie_inference_graph
             else:
                 logger.warning("fwd_only not available in current torch version")
 
@@ -92,12 +106,18 @@ class PatternMatchPass(GraphModulePass):
             run_functional_passes: bool = True,
             get_decomp_fn: Optional[Callable[..., Any]] = select_custom_decomp_table,
         ) -> torch.fx.GraphModule:
-            return pm.fwd_only(
-                fn=fn,
-                args=args,
-                run_functional_passes=run_functional_passes,
-                get_decomp_fn=get_decomp_fn
-            )
+            if IS_TORCH_21:
+                return pm.fwd_only(
+                    fn=fn,
+                    args=args
+                )
+            else:
+                return pm.fwd_only(
+                    fn=fn,
+                    args=args,
+                    run_functional_passes=run_functional_passes,
+                    get_decomp_fn=get_decomp_fn
+                )
 
         try:
             pm.register_replacement(
