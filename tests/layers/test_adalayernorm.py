@@ -18,6 +18,7 @@ import torch.nn as nn
 
 sys.path.append('../')
 from device import DEVICE_ID
+from tests.utils.utils.precision_compare import data_compare
 from mindiesd import layernorm_scale_shift
 from mindiesd.utils import ParametersInvalid
 
@@ -180,9 +181,8 @@ class TestAdaLayerNorm(unittest.TestCase):
 
         self.assertEqual(out_non_fused.shape, out_fused.shape)
 
-        out_fused = out_fused.reshape(1, -1).to(torch.float32)
-        out_non_fused = out_non_fused.reshape(1, -1).to(torch.float32)
-        self.assertGreater(torch.cosine_similarity(out_non_fused, out_fused)[0], 2**-7)
+        result, _, max_err = data_compare(out_fused.cpu(), out_non_fused.cpu())
+        self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
 
 
     @torch.no_grad()
@@ -202,9 +202,8 @@ class TestAdaLayerNorm(unittest.TestCase):
 
         self.assertEqual(out_non_fused.shape, out_fused.shape)
 
-        out_fused = out_fused.reshape(1, -1).to(torch.float32)
-        out_non_fused = out_non_fused.reshape(1, -1).to(torch.float32)
-        self.assertGreater(torch.cosine_similarity(out_non_fused, out_fused)[0], 2**-7)
+        result, _, max_err = data_compare(out_fused.cpu(), out_non_fused.cpu())
+        self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
 
 
     @torch.no_grad()
@@ -224,9 +223,8 @@ class TestAdaLayerNorm(unittest.TestCase):
 
         self.assertEqual(out_non_fused.shape, out_fused.shape)
 
-        out_fused = out_fused.reshape(1, -1).to(torch.float32)
-        out_non_fused = out_non_fused.reshape(1, -1).to(torch.float32)
-        self.assertGreater(torch.cosine_similarity(out_non_fused, out_fused)[0], 2**-7)
+        result, _, max_err = data_compare(out_fused.cpu(), out_non_fused.cpu())
+        self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
 
 
     @torch.no_grad()
@@ -246,9 +244,8 @@ class TestAdaLayerNorm(unittest.TestCase):
 
         self.assertEqual(out_non_fused.shape, out_fused.shape)
 
-        out_fused = out_fused.reshape(1, -1).to(torch.float32)
-        out_non_fused = out_non_fused.reshape(1, -1).to(torch.float32)
-        self.assertGreater(torch.cosine_similarity(out_non_fused, out_fused)[0], 2**-7)
+        result, _, max_err = data_compare(out_fused.cpu(), out_non_fused.cpu())
+        self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
 
 
 if __name__ == "__main__":

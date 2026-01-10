@@ -20,7 +20,7 @@ from mindiesd.quantization.config import QuantConfig, LayerQuantConfig
 from mindiesd.quantization.layer import W8A8QuantBaseLinear, WeightQuantLinear, W8A8MXFP8QuantLinear
 from mindiesd.quantization.mode import QuantAlgorithm
 from mindiesd.quantization.quantize import smooth_quantize_w8a8, smooth_quantize, quantize
-from mindiesd.quantization.quantize import weight_quantize, w8a16_quantize, add_fa3
+from mindiesd.quantization.quantize import weight_quantize, w8a16_quantize
 from mindiesd.quantization.quantize import get_cfg_and_weights
 from mindiesd.utils import ParametersInvalid, ConfigError
 

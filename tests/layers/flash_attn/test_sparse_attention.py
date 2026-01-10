@@ -15,11 +15,12 @@ from unittest.mock import patch
 
 import sys
 import torch
-
+import torch_npu
 sys.path.append('../')
 
 from device import DEVICE_ID
 from mindiesd.layers.flash_attn.sparse_flash_attn import sparse_attention
+from tests.utils.utils.precision_compare import data_compare
 
 
 class TestSparseAttention(unittest.TestCase):
@@ -88,11 +89,10 @@ class TestSparseAttention(unittest.TestCase):
                     pre_tockens=2147483647,
                     next_tockens=2147483647,
                     head_num=self.head)[0]
-        csoine_sim = torch.cosine_similarity(
-            out.reshape(1, -1), fascore.reshape(1, -1)
-        )[0]
-        self.assertGreaterEqual(csoine_sim, 0.99,
-                                "Cosine similarity between ra_v3 and npu_fusion_attention should be high.")
+
+        result, _, max_err = data_compare(out.cpu(), fascore.cpu())
+        self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
+
     def test_ada_bsa_result(self):
         out = sparse_attention(
             self.q, self.k, self.v,
@@ -111,14 +111,10 @@ class TestSparseAttention(unittest.TestCase):
                     pre_tockens=2147483647,
                     next_tockens=2147483647,
                     head_num=self.head)[0]
-        csoine_sim = torch.cosine_similarity(
-            out.reshape(1, -1), fascore.reshape(1, -1)
-        )[0]
-        self.assertGreaterEqual(csoine_sim, 0.99,
-                                "Cosine similarity between bsa and npu_fusion_attention should be high.")
+        result, _, max_err = data_compare(out.cpu(), fascore.cpu())
+        self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
+
 
 if __name__ == '__main__':
-    import torch_npu
-
     torch_npu.npu.set_device(DEVICE_ID)
     unittest.main()

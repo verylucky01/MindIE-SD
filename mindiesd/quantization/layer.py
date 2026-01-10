@@ -112,18 +112,30 @@ class W8A8QuantBaseLinear(ABC, nn.Module):
         return output.view(*new_size)
 
     def _init_static_quant_param(self, prefix=None, weights=None, **kwargs):
-        input_scale = get_quant_weight(weights, f'{prefix}.input_scale').to(self.dtype)
-        self.register_buffer("input_scale", input_scale, persistent=False)
-
-        input_offset = get_quant_weight(weights, f'{prefix}.input_offset').to(torch.int8)
-        self.register_buffer("input_offset", input_offset, persistent=False)
-
         quant_bias = get_quant_weight(weights, f'{prefix}.quant_bias')
         self.register_buffer("quant_bias", quant_bias, persistent=False)
         deq_scale = get_quant_weight(weights, f'{prefix}.deq_scale')
         self.register_buffer("deq_scale", deq_scale, persistent=False)
         weight = get_quant_weight(weights, f'{prefix}.weight')
         self.register_buffer("weight", weight, persistent=False)
+        if self.dtype == torch.float16:
+            input_scale = get_quant_weight(weights, f'{prefix}.input_scale').to(torch.float32)
+        else:
+            input_scale = get_quant_weight(weights, f'{prefix}.input_scale').to(self.dtype)
+        if input_scale.dim() == 1:
+            input_scale = input_scale.repeat(weight.data.shape[1])
+        else:
+            input_scale = input_scale.repeat(1, weight.data.shape[1])
+
+        self.register_buffer("input_scale", input_scale, persistent=False)
+        
+        input_offset = get_quant_weight(weights, f'{prefix}.input_offset').to(torch.int8)
+        if input_offset.dim() == 1:
+            input_offset = input_offset.repeat(weight.data.shape[1])
+        else:
+            input_offset = input_offset.repeat(1, weight.data.shape[1])
+
+        self.register_buffer("input_offset", input_offset, persistent=False)
         
     def _init_dynamic_quant_param(self, prefix=None, weights=None, **kwargs):
         weight_scale = get_quant_weight(weights, f'{prefix}.weight_scale').squeeze().to(self.dtype)
@@ -159,13 +171,13 @@ class W8A8QuantLinear(W8A8QuantBaseLinear):
         if not self.is_dynamic:
             if self.mul_scale is not None:
                 x_scaled = x * self.mul_scale
-                x_int8 = torch_npu.npu_quantize(x_scaled, scale=self.input_scale,
-                    zero_point=self.input_offset, dtype=torch.int8)
+                x_int8 = torch_npu.npu_quantize(x_scaled, scales=self.input_scale,
+                    zero_points=self.input_offset, dtype=torch.qint8, axis=-1)
             else:
-                x_int8 = torch_npu.npu_quantize(x, scale=self.input_scale,
-                    zero_point=self.input_offset, dtype=torch.int8)
+                x_int8 = torch_npu.npu_quantize(x, scales=self.input_scale,
+                    zero_points=self.input_offset, dtype=torch.qint8, axis=-1)
 
-            output = torch_npu.npu_quant_matmul(x_int8, self.weight, self.deq_scale, 
+            output = torch_npu.npu_quant_matmul(x_int8, self.weight.T, self.deq_scale, 
                                                 bias=self.quant_bias, 
                                                 output_dtype=self.dtype)
         else:
@@ -209,13 +221,13 @@ class W8A8TimeStepQuantLinear(W8A8QuantBaseLinear):
         if not self.is_dynamic:
             if self.mul_scale is not None:
                 x_scaled = x * self.mul_scale
-                x_int8 = torch_npu.npu_quantize(x_scaled, scale=self.input_scale[t_idx],
-                    zero_point=self.input_offset[t_idx], dtype=torch.int8)
+                x_int8 = torch_npu.npu_quantize(x_scaled, scales=self.input_scale[t_idx],
+                    zero_points=self.input_offset[t_idx], dtype=torch.qint8, axis=-1)
             else:
-                x_int8 = torch_npu.npu_quantize(x, scale=self.input_scale[t_idx],
-                    zero_point=self.input_offset[t_idx], dtype=torch.int8)
+                x_int8 = torch_npu.npu_quantize(x, scales=self.input_scale[t_idx],
+                    zero_points=self.input_offset[t_idx], dtype=torch.qint8, axis=-1)
 
-            output = torch_npu.npu_quant_matmul(x_int8, self.weight, self.deq_scale[t_idx],
+            output = torch_npu.npu_quant_matmul(x_int8, self.weight.T, self.deq_scale[t_idx],
                                                 bias=self.quant_bias[t_idx],
                                                 output_dtype=self.dtype)
         else:

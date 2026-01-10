@@ -16,6 +16,8 @@ import torch_npu
 import sys
 import os
 import math
+sys.path.append('../')
+from tests.utils.utils.precision_compare import data_compare
 torch.ops.load_library("../mindiesd/plugin/libPTAExtensionOPS.so")
 
 
@@ -93,12 +95,8 @@ class TestRainFusionAttention(unittest.TestCase):
                     pre_tockens=2147483647,
                     next_tockens=2147483647,
                     head_num=self.head)[0]
-        csoine_sim = torch.cosine_similarity(
-            ra.to("cpu").to(dtype=torch.float32).reshape(1, -1),
-            fascore.to("cpu").reshape(1, -1)
-        )[0]
-        self.assertGreaterEqual(csoine_sim, 0.99,
-                                "Cosine similarity between ra and npu_fusion_attention should be high.")
+        result, _, max_err = data_compare(ra.cpu(), fascore.cpu())
+        self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
         
     def test_ra_output_shape(self):
             expected_shape = (self.batch_size * self.q_seqlen, self.head, self.headdim)

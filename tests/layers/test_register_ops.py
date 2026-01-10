@@ -11,7 +11,7 @@
 # See the Mulan PSL v2 for more details.
 import unittest
 import torch
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock, ANY
 from packaging.version import Version
 
 from mindiesd.layers import register_ops
@@ -26,9 +26,15 @@ class TestRegisterOps(unittest.TestCase):
     
     def setUp(self):
         self.torch_version = Version(torch.__version__.split("+")[0])
-        self.skip_compilation = self.torch_version < Version("2.8.0")
         self.test_op_base = "test_op_mindie_sd_"
-    
+        self.register_func_path = self._get_register_func_path()
+
+    def _get_register_func_path(self):
+        if self.torch_version >= Version("2.2"):
+            return 'mindiesd.layers.register_ops._native_register_fake'
+        else:
+            return 'mindiesd.layers.register_ops._lib.impl'
+
     def test_check_mindie_operator_exists_existing(self):
         result = register_ops.check_mindie_operator_exists("rope_mindie_sd")
         self.assertTrue(result)
@@ -67,10 +73,11 @@ class TestRegisterOps(unittest.TestCase):
             
             mock_library.assert_called_once_with("mindie", "IMPL")
     
-    
     def test_compatible_register_fake_decorator(self):
         test_op_name = f"{self.test_op_base}compatible_decorator"
-        with patch('mindiesd.layers.register_ops._lib.impl') as mock_impl:
+        with patch(self.register_func_path) as mock_register:
+            mock_register.return_value = lambda f: f
+            
             def test_fake(x):
                 return torch.empty_like(x)
             
@@ -80,14 +87,16 @@ class TestRegisterOps(unittest.TestCase):
             self.assertTrue(callable(decorated_func))
             self.assertEqual(decorated_func.__name__, "test_fake")
             
-            if self.torch_version < Version("2.2.0"):
-                mock_impl.assert_called()
+            if self.torch_version == Version("2.1"):
+                mock_register.assert_called_with(test_op_name, ANY, "Meta")
             else:
-                mock_impl.assert_not_called()
-    
+                mock_register.assert_called_with(f"{test_op_name}")
+
     def test_compatible_register_fake_wrapper(self):
         test_op_name = f"{self.test_op_base}compatible_wrapper"
-        with patch('mindiesd.layers.register_ops._lib.impl') as mock_impl:
+        with patch(self.register_func_path) as mock_register:
+            mock_register.return_value = lambda f: f
+            
             x = torch.randn(2, 4, device='meta')
             
             def test_fake(x):
@@ -99,10 +108,14 @@ class TestRegisterOps(unittest.TestCase):
             
             self.assertTrue(callable(decorated_func))
             
-            if Version("2.1.0") <= self.torch_version < Version("2.2.0"):
-                result = decorated_func(x)
-                self.assertEqual(result.device.type, "meta")
-                self.assertEqual(result.shape, x.shape)
+            result = decorated_func(x)
+            self.assertEqual(result.device.type, "meta")
+            self.assertEqual(result.shape, x.shape)
+            
+            if self.torch_version == Version("2.1"):
+                mock_register.assert_called_with(test_op_name, ANY, "Meta")
+            else:
+                mock_register.assert_called_with(f"{test_op_name}")
 
 
 if __name__ == '__main__':

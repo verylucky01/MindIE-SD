@@ -58,24 +58,26 @@ def block_sparse_attention_cpu(query, key, value, smask, causal=False, blocksize
 
                 k_head = ni // gqa
                 k = key[bi, k_head][mask_seq]  # [k_eff, dim]
-                kt = k.T  # [dim, k_eff]
+                if k.shape[0] == 0:
+                    out = np.zeros((end - start, dim), dtype=np.float32)
+                else:
+                    kt = k.T  # [dim, k_eff]
+                    p = q @ kt  # [q_len, k_eff]
+                    p = p / np.sqrt(dim)
+                    if causal : 
+                        t = end - start
+                        cm = np.triu(np.ones((t, t)), k=1) * (-10000.0)
+                        p[:, -t:] += cm
 
-                p = q @ kt  # [q_len, k_eff]
-                p = p / np.sqrt(dim)
-                if causal : 
-                    t = end - start
-                    cm = np.triu(np.ones((t, t)), k=1) * (-10000.0)
-                    p[:, -t:] += cm
+                    p =  p -p.max(axis=-1, keepdims=True)
+                    exp_p = np.exp(p)
+                    exp_sum = exp_p.sum(axis=-1, keepdims=True)
+                    attn = exp_p / (exp_sum + 1e-12)  # softmax
+                    # 提取对应的 value
+                    v = value[bi, k_head][mask_seq]  # [v_eff, dim]
 
-                p =  p -p.max(axis=-1, keepdims=True)
-                exp_p = np.exp(p)
-                exp_sum = exp_p.sum(axis=-1, keepdims=True)
-                attn = exp_p / (exp_sum + 1e-12)  # softmax
-                # 提取对应的 value
-                v = value[bi, k_head][mask_seq]  # [v_eff, dim]
-
-                # 输出: attn @ V
-                out = attn @ v  # [q_len, dim]
+                    # 输出: attn @ V
+                    out = attn @ v  # [q_len, dim]
 
                 out_tensor = torch.from_numpy(out)
                 output[bi, ni, start:end] = out_tensor
@@ -135,6 +137,10 @@ class TestBsaMindieSd(unittest.TestCase):
         sparsity = 0.5
         smask = torch.rand(self.batch, self.head_num, sn1, sn2) > sparsity
         smask[:,:,:,0] = True
+        smask[:,:,1,:] = False
+        smask[:,:,sn1-2,:] = False
+        smask[:,:,sn1-1,:] = False
+
         smask[:, :, :, realsn2:] = False
         if self.causal:
             for j in range(sn1):

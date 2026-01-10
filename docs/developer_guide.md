@@ -91,19 +91,12 @@ export CPLUS_INCLUDE_PATH=/usr/include/c++/12/:/usr/include/c++/12/aarch64-openE
 需要安装的CANN软件包包括：
 -   CANN Toolkit开发套件包
 -   CANN Kernels算子包
--   CANN NNAL神经网络加速库（可选）
 
 请参见[《CANN 软件安装指南》](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha002/softwareinst/instg/instg_quick.html?Mode=PmIns&OS=openEuler&Software=cannToolKit)中的“选择安装场景”章节或“选择安装场景”章节（社区版），根据安装方式、操作系统、业务场景选择安装场景，选择完成后单击“开始阅读”，按“安装CANN（物理机场景） \> 安装CANN软件包”章节进行安装。
 
 -   安装方式：选择“在物理机上安装”。
 -   操作系统：选择使用的操作系统。
 -   业务场景：选择“训练&推理&开发调试”。
-
-> **说明：** 
->如果需要使用MindIE SD量化功能时，则必须安装CANN软件包NNAL神经网络加速库的Python库，即安装CANN软件包NNAL神经网络加速库时需添加**--torch_atb**参数进行指定，且运行时确保已安装Kernels算子包。安装命令如下所示：
->```
->./Ascend-cann-nnal_<version>_linux-<arch>.run --install --torch_atb
->```
 
 3. 安装PyTorch和Torch NPU
 

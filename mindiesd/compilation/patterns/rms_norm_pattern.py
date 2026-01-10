@@ -21,7 +21,12 @@ if npu_available:
 
 
 def create(dtype, epsilon=1e-6):
-    _epsilon_fp32 = torch.tensor(epsilon, dtype=torch.float32, device="cpu").item()
+    if "2.6.0" in torch.__version__:
+        _dtype_cast_func = torch.ops.npu.npu_dtype_cast.default
+        _eps_in_bf16 = torch.tensor(epsilon, dtype=torch.bfloat16, device="cpu").item()
+    else:
+        _dtype_cast_func = torch.ops.npu._npu_dtype_cast.default
+        _eps_in_fp32 = torch.tensor(epsilon, dtype=torch.float32, device="cpu").item()
 
 
     class RMSNormPattern(PatternBase):
@@ -67,20 +72,31 @@ def create(dtype, epsilon=1e-6):
                 input_dtype = hidden_states.dtype
                 last_dim = hidden_states.dim() - 1
                 
-                hidden_states_fp32 = torch.ops.npu._npu_dtype_cast.default(hidden_states, torch.float32)
+                hidden_states_fp32 = _dtype_cast_func(hidden_states, torch.float32)
                 variance = hidden_states_fp32.pow(2).mean(last_dim, keepdim=True)
 
-                variance_eps = torch.ops.aten.add.Scalar(variance, _epsilon_fp32)
-                hidden_states_mul = hidden_states_fp32 * torch.rsqrt(variance_eps)
+                if "2.6.0" in torch.__version__:
+                    variance_eps = torch.ops.aten.add.Scalar(variance, _eps_in_bf16)
+                    hidden_states_mul = hidden_states_fp32 * torch.rsqrt(variance_eps)
+                    hidden_states_mul_cast = torch.ops.aten._to_copy.default(
+                        hidden_states_mul, 
+                        dtype=input_dtype, 
+                        layout=torch.strided, 
+                        device=hidden_states.device
+                    )
+                        
+                    result = hidden_states_mul_cast * weight
+                else:
+                    variance_eps = torch.ops.aten.add.Scalar(variance, _eps_in_fp32)
+                    hidden_states_mul = hidden_states_fp32 * torch.rsqrt(variance_eps)
+                    hidden_states_mul_weight = hidden_states_mul * weight
 
-                hidden_states_mul_weight = hidden_states_mul * weight
-
-                result = torch.ops.aten._to_copy.default(
-                    hidden_states_mul_weight, 
-                    dtype=input_dtype, 
-                    layout=torch.strided, 
-                    device=hidden_states.device
-                )
+                    result = torch.ops.aten._to_copy.default(
+                        hidden_states_mul_weight, 
+                        dtype=input_dtype, 
+                        layout=torch.strided, 
+                        device=hidden_states.device
+                    )
 
                 return result
                 
@@ -89,7 +105,7 @@ def create(dtype, epsilon=1e-6):
         @staticmethod
         def replacement(hidden_states, weight):
             def func(hidden_states, weight):
-                return torch_npu.npu_rms_norm(hidden_states, weight, epsilon=_epsilon_fp32)[0]
+                return torch_npu.npu_rms_norm(hidden_states, weight, epsilon=epsilon)[0]
             return func(hidden_states, weight)
 
     return RMSNormPattern
