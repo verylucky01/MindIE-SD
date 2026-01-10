@@ -34,6 +34,16 @@
 #include <graph/utils/type_utils.h>
 
 using std::string;
+
+using namespace matmul_tiling;
+
+namespace optiling {
+constexpr uint32_t NUM_2 = 2;
+int32_t SINGLE_CORE_MBASE = 128;
+int32_t SINGLE_CORE_NBASE = 1024;
+
+constexpr uint32_t ACTUAL_SEQ_Q_INDEX = 2;
+constexpr uint32_t ACTUAL_SEQ_KV_INDEX = 3;
 constexpr uint32_t QUERY_INDEX = 0;
 constexpr uint32_t KEY_INDEX = 1;
 
@@ -54,16 +64,6 @@ constexpr uint32_t DIM2_INDEX = 2;
 constexpr uint32_t DIM3_INDEX = 3;
 
 uint64_t BASE_TILING_KEY = 1000000000000000000;  // 默认 TILING_KEY
-
-using namespace matmul_tiling;
-
-namespace optiling {
-constexpr uint32_t NUM_2 = 2;
-constexpr int32_t SINGLE_CORE_MBASE = 128;
-constexpr int32_t SINGLE_CORE_NBASE = 1024;
-
-constexpr uint32_t ACTUAL_SEQ_Q_INDEX = 2;
-constexpr uint32_t ACTUAL_SEQ_KV_INDEX = 3;
 
 void PromptFlashAttentionSplitNSNew(SparseBlockEstimateTilingData &tiling, uint32_t curCoreNum,
     std::vector<int64_t> &actualSeqLengths, std::vector<int64_t> &actualSeqLengthsKV, int64_t actualSharedPrefixLen,
@@ -262,6 +262,11 @@ static void setTilingKey(gert::TilingContext *context, bool causal, ge::DataType
 
 static ge::graphStatus TilingFunc(gert::TilingContext *context)
 {
+    auto db = 2;
+    auto ascendcPlatform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
+    auto attrs = context->GetAttrs();
+    uint32_t coresAic = ascendcPlatform.GetCoreNumAic();
+    uint32_t coresAiv = ascendcPlatform.GetCoreNumAiv();
     bool inputIsNullPtr =
         (context->GetInputDesc(QUERY_INDEX) == nullptr) || (context->GetInputDesc(KEY_INDEX) == nullptr) ||
         (context->GetInputShape(QUERY_INDEX) == nullptr) || (context->GetInputShape(KEY_INDEX) == nullptr);
@@ -276,16 +281,14 @@ static ge::graphStatus TilingFunc(gert::TilingContext *context)
     }
 
     SparseBlockEstimateTilingData tiling;
-    auto ascendcPlatform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
-    auto attrs = context->GetAttrs();
+
     uint32_t sparseSize = *attrs->GetAttrPointer<int32_t>(SPARSE_SIZE);
     const char *layout = attrs->GetAttrPointer<char>(INPUT_LAYOUT);
     std::string layoutStr = std::string(layout);
     if (SetDataShape(tiling, context, layoutStr) != ge::GRAPH_SUCCESS) {
         return ge::GRAPH_FAILED;
     }
-    tiling.set_sOuterFactor(SINGLE_CORE_MBASE);
-    tiling.set_sInnerFactor(SINGLE_CORE_NBASE);
+
     tiling.set_sparseSize(sparseSize);
     tiling.set_scaleFactor(*attrs->GetAttrPointer<float>(SCALE_VALUE));
     tiling.set_threshold(*attrs->GetAttrPointer<float>(THRESHOLD));
@@ -298,6 +301,21 @@ static ge::graphStatus TilingFunc(gert::TilingContext *context)
 
     int32_t stride = *attrs->GetAttrPointer<int32_t>(STRIDE);
     tiling.set_stride(stride);
+
+    while (tiling.get_seqLenK() < stride * db * SINGLE_CORE_NBASE) {
+        SINGLE_CORE_NBASE /= 2; // 2：数据减半
+    }
+    SINGLE_CORE_NBASE = std::max(SINGLE_CORE_NBASE, 512); // 512: 下限阈值
+
+    auto tasks = tiling.get_headNumQ() * tiling.get_seqLenQ(); // 6038
+    if (coresAiv == 0) {
+        return ge::GRAPH_FAILED;
+    }
+    tasks = (tasks + coresAiv - 1) / coresAiv; // 151
+    tasks = (tasks + sparseSize -1) / sparseSize; // 2
+    SINGLE_CORE_MBASE = std::min(SINGLE_CORE_MBASE, int(tasks * sparseSize / stride));
+    tiling.set_sOuterFactor(SINGLE_CORE_MBASE);
+    tiling.set_sInnerFactor(SINGLE_CORE_NBASE);
 
     MatmulApiTiling cubeTiling(ascendcPlatform);
     auto mmInputType =
@@ -314,12 +332,13 @@ static ge::graphStatus TilingFunc(gert::TilingContext *context)
     cubeTiling.SetShape(SINGLE_CORE_MBASE, SINGLE_CORE_NBASE, dim * stride);
     cubeTiling.SetBias(false);
     cubeTiling.SetBufferSpace(-1, -1, -1);
+    cubeTiling.SetFixSplit(std::min(SINGLE_CORE_MBASE, 128), std::min(SINGLE_CORE_NBASE, 128), 128); // 128: 上限阈值
 
     if (cubeTiling.GetTiling(tiling.cubeTilingData) == -1) {  // Get matmul tiling.
         return ge::GRAPH_FAILED;
     }
-    uint32_t coresAic = ascendcPlatform.GetCoreNumAic();
-    uint32_t coresAiv = ascendcPlatform.GetCoreNumAiv();
+    tiling.cubeTilingData.set_dbL0C(2); // 2: db
+
     context->SetBlockDim(coresAic);
     tiling.set_coreNumAic(coresAic);
 
@@ -368,7 +387,6 @@ static ge::graphStatus TilingFunc(gert::TilingContext *context)
     context->GetRawTilingData()->SetDataSize(tiling.GetDataSize());
     setTilingKey(context, causal, qDataType, layoutStr);
 
-    auto db = 2;
     size_t userWorkspaceSize =
         coresAiv * (SINGLE_CORE_MBASE * sizeof(float) * (SINGLE_CORE_NBASE + 32) * (db * 2 /* first reduce + qk */) +
                        SINGLE_CORE_MBASE * sizeof(half) * db * stride * tiling.get_dim());  // reorderq

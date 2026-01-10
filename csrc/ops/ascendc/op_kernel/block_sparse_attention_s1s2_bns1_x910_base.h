@@ -401,7 +401,7 @@ protected:
     GlobalTensor<T> queryGm;
     GlobalTensor<KV_T> keyGm;
     GlobalTensor<KV_T> valueGm;
-    GlobalTensor<bool> sparseMaskGm;
+    GlobalTensor<int8_t> sparseMaskGm;
     GlobalTensor<O> attentionOutGm;
     GlobalTensor<half> attentionOutInitGm;
     GlobalTensor<int64_t> actualSeqLengthsGm;
@@ -702,7 +702,7 @@ __aicore__ inline void BlockSparseAttentionS1s2Bns1X910Base<BSAT>::Init(__gm__ u
     pipe = tPipe;
         
     queryGm.SetGlobalBuffer((__gm__ T*)query);
-    sparseMaskGm.SetGlobalBuffer((__gm__ bool*)sparseMask);
+    sparseMaskGm.SetGlobalBuffer((__gm__ int8_t*)sparseMask);
     sparseBlockCountGm.SetGlobalBuffer((__gm__  int32_t*)sparseCount);
     attentionOutGm.SetGlobalBuffer((__gm__ O*)attentionOut);
     workspaceGm.SetGlobalBuffer((__gm__ mmOutputType*)(workspace));

@@ -1040,11 +1040,11 @@ public:
                 cnt = actColCount;
                 scoreGuard = 0.0f;
             }
-            scoreGuard -= EPS;
-            if ((cnt > actColCount * this->rowSparse) && !CAUSAL && actColCount >= 10) { // 10 is activate col count
+            if ((cnt > actColCount * this->rowSparse) && actColCount >= 10) { // 10: 有效列数
                 auto kk = static_cast<int32_t>(actColCount * this->rowSparse);
                 scoreGuard = static_cast<float>(sortedValueLocal.GetValue(kk - 1));
             }
+            scoreGuard -= EPS;
             if (setFirst) {
                 srcLocal.SetValue(0, static_cast<half>(scoreGuard + 1.0f));
             }

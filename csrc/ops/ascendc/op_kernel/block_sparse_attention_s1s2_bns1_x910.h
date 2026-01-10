@@ -89,11 +89,11 @@ protected:
     }
 
     static __aicore__ inline void Mask2Pos(const LocalTensor<int32_t>& sparseId, const LocalTensor<int32_t>& index,
-        const LocalTensor<bool> sparseMask, uint32_t count, LocalTensor<uint8_t>& tmpUb)
+        const LocalTensor<int8_t>& sparseMask, uint32_t count, LocalTensor<uint8_t>& tmpUb)
     {
         auto alignCount = ((count + 32 - 1) / 32) * 32;
         auto maskHalf = tmpUb.template ReinterpretCast<half>(); // 2
-        Cast(maskHalf, sparseMask.template ReinterpretCast<int8_t>(), RoundMode::CAST_NONE, alignCount); // 11
+        Cast(maskHalf, sparseMask, RoundMode::CAST_NONE, alignCount); // 11
         pipe_barrier(PIPE_V);
         auto maskFloat = maskHalf[alignCount].template ReinterpretCast<float>(); // 4
         Cast(maskFloat, maskHalf, RoundMode::CAST_NONE, alignCount);
@@ -331,7 +331,6 @@ protected:
         // to pos.getvalue(sparseMaskPosOffset + copyOnceBlockCount - 1) kv中的第几个block
         // *tensorBcoreOffset + 第几个block  * blocksize * h or d
         //* sparsePos_ptr 是global的ptr
-
         if constexpr (USE_BLOCK_SPARE) {
             this->bmm2LocalInfo = this->PABmm2UB.template Get<uint32_t>();
             uint32_t ii = 0;
@@ -674,7 +673,6 @@ __aicore__ inline void BlockSparseAttentionS1s2Bns1X910<BSAT>::ComputeEachCore(i
             this->GetSingleCoreParam(bIdx); // actualSeqLengthKVPerBatch and other tiling data
             uint32_t sOuterSize = this->singleProcessSOuterSizeWhole;
             int sOuterBlockNum = (params->actualSeqLengthPerBatch + sOuterSize - 1) / sOuterSize;
-
             GetTaskCost(sparseBlockCountOffsetBase, sOuterBlockNum);
             auto realS2 = (params->actualSeqLengthKVPerBatch + this->sparseBlockSize - 1) / this->sparseBlockSize;
             params->multiSeqOffset = this->CalMultiSeqOffset(bIdx);
@@ -686,17 +684,21 @@ __aicore__ inline void BlockSparseAttentionS1s2Bns1X910<BSAT>::ComputeEachCore(i
                 SetFlag<HardEvent::S_V>(eid_vs); WaitFlag<HardEvent::S_V>(eid_vs);
                 if (sOuterLoopIdx < 0) {continue;}
 
-                CalcSparsePos(this->tmpBuff, sparseMaskOffsetBase + sOuterLoopIdx * this->sparseMaskS2Size, 1,
-                    this->sparseMaskS2Size, realS2);
                 params->singleProcessSOuterSize = sOuterLoopIdx == sOuterBlockNum - 1 ?
                     this->singleProcessSOuterSizeTail : sOuterSize;
                 params->sOuterOffset = sOuterLoopIdx * sOuterSize;
                 this->LoopSOuterOffsetInit(params->multiSeqOffset, bIdx);
                 auto qBlockOffset = params->sOuterOffset / this->sparseBlockSize; // *  = sOuterLoopIdx
                 auto sparseMaskIdRowOffset = sparseMaskOffsetBase + qBlockOffset * this->sparseMaskS2Size;
-                //* id的行起始地址 id  in [sparseMaskIdRowOffset, sparseMaskIdRowOffset + currowblockcount]
-                // sparseMaskIdRowOffset / s2align32
+
                 auto sparseBlockCount = this->sparseBlockCountGm.GetValue(qBlockOffset + sparseBlockCountOffsetBase);
+                if (sparseBlockCount == 0) {
+                    InitOutput(this->attentionOutGm[params->attentionOutOffset],
+                        params->singleProcessSOuterSize * this->headSize);
+                    continue;
+                }
+                CalcSparsePos(this->tmpBuff, sparseMaskOffsetBase + sOuterLoopIdx * this->sparseMaskS2Size, 1,
+                    this->sparseMaskS2Size, realS2);
                 eid_vs = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_S));
                 SetFlag<HardEvent::V_S>(eid_vs);
                 WaitFlag<HardEvent::V_S>(eid_vs);
@@ -711,9 +713,14 @@ template<typename BSAT>
 __aicore__ inline void BlockSparseAttentionS1s2Bns1X910<BSAT>::CalcSparsePos(TBuf<>& tbuf, uint32_t srcOffset,
     uint32_t s1Count, uint32_t s2, uint32_t realS2)
 {
-    auto mask = tbuf.Get<bool>();
-    auto computeSize = s1Count * s2;
-    DataCopy(mask, this->sparseMaskGm[srcOffset], computeSize); // 1
+    auto mask = tbuf.Get<int8_t>();
+    auto computeSize = s1Count * Align<uint32_t>(s2, BYTE_BLOCK_BSA);
+    auto tailSize = s2 % BYTE_BLOCK_BSA;
+    // DataCopy(mask, this->sparseMaskGm[srcOffset], computeSize); // 1
+    DataCopyExtParams ext {1, static_cast<uint32_t>(s1Count * s2), 0, 0, 0};  // * byte num
+    DataCopyPadExtParams pad {tailSize > 0, 0, static_cast<uint8_t>(tailSize == 0 ? 0: BYTE_BLOCK_BSA - tailSize),
+        (int8_t)0}; //* element num
+    DataCopyPad(mask, this->sparseMaskGm[srcOffset], ext, pad); //* pad to 32 align
     auto index = mask[computeSize].template ReinterpretCast<int32_t>();
     ArithProgression<int32_t>(index, static_cast<int32_t>(0), static_cast<int32_t>(1), s2); // 5
     auto eventID = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::MTE2_V));
@@ -721,16 +728,10 @@ __aicore__ inline void BlockSparseAttentionS1s2Bns1X910<BSAT>::CalcSparsePos(TBu
     WaitFlag<HardEvent::MTE2_V>(eventID);
     pipe_barrier(PIPE_V);
 
-    if (s1Count > 1) {
-        DataCopy(index[s2], index, {(uint16_t)(s1Count-1),
-            static_cast<uint16_t>(s2 * sizeof(int32_t) / BYTE_BLOCK_BSA), 0, 0});
-        pipe_barrier(PIPE_V);
-    }
     auto sparseId = index[computeSize]; // 9
     auto tmpUb = sparseId[computeSize].template ReinterpretCast<uint8_t>();
-    for (auto i=0; i<s1Count; i++) {
-        Mask2Pos(sparseId[i*s2], index, mask[i*s2], realS2, tmpUb);
-    }
+
+    Mask2Pos(sparseId, index, mask, realS2, tmpUb);
     DataCopy(this->blockIdUb, sparseId, computeSize);
     pipe_barrier(PIPE_V);
     eventID = static_cast<event_t>(GetTPipePtr()->FetchEventID(HardEvent::V_MTE2));
