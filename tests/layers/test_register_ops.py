@@ -36,7 +36,7 @@ class TestRegisterOps(unittest.TestCase):
             return 'mindiesd.layers.register_ops._lib.impl'
 
     def test_check_mindie_operator_exists_existing(self):
-        result = register_ops.check_mindie_operator_exists("rope_mindie_sd")
+        result = register_ops.check_mindie_operator_exists("rope")
         self.assertTrue(result)
     
     def test_check_mindie_operator_exists_nonexistent(self):
@@ -71,7 +71,7 @@ class TestRegisterOps(unittest.TestCase):
             import importlib
             importlib.reload(register_ops)
             
-            mock_library.assert_called_once_with("mindie", "IMPL")
+            mock_library.assert_called_once_with("mindiesd", "IMPL")
     
     def test_compatible_register_fake_decorator(self):
         test_op_name = f"{self.test_op_base}compatible_decorator"

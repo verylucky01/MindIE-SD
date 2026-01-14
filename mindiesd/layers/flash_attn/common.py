@@ -49,11 +49,13 @@ class AttentionParam:
     q_seqlen: int
     kv_seqlen: int
     dtype: torch.dtype
+    head_first: bool
 
     def to_str(self):
         param_str = f"batch_size:{self.batch_size}, head_num:{self.head_num}, head_dim:{self.head_dim}," \
-            f" q_seqlen:{self.q_seqlen}, kv_seqlen:{self.kv_seqlen}, dtype:{self.dtype}"
+            f" q_seqlen:{self.q_seqlen}, kv_seqlen:{self.kv_seqlen}, dtype:{self.dtype}, head_fist: {self.head_first}"
         return param_str
 
     def to_hash(self):
-        return hash((self.batch_size, self.head_num, self.head_dim, self.q_seqlen, self.kv_seqlen, self.dtype))
+        return hash((
+            self.batch_size, self.head_num, self.head_dim, self.q_seqlen, self.kv_seqlen, self.dtype, self.head_first))

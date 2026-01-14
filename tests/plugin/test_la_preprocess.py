@@ -42,7 +42,7 @@ class TestLaPreprocessMindieSd(unittest.TestCase):
         return (seq_len + align_len - 1) // align_len * align_len
 
     def test_la_preprocess_output_shape(self):
-        out_query, out_key, out_value = torch.ops.mindie.la_preprocess_mindie_sd(
+        out_query, out_key, out_value = torch.ops.mindiesd.la_preprocess(
             self.query, self.key, self.value, self.align_len
         )
 
@@ -57,11 +57,11 @@ class TestLaPreprocessMindieSd(unittest.TestCase):
         self.assertEqual(out_value.shape, expected_kv_shape)
 
     def test_la_preprocess_consistency(self):
-        out_query1, out_key1, out_value1 = torch.ops.mindie.la_preprocess_mindie_sd(
+        out_query1, out_key1, out_value1 = torch.ops.mindiesd.la_preprocess(
             self.query, self.key, self.value, self.align_len
         )
         
-        out_query2, out_key2, out_value2 = torch.ops.mindie.la_preprocess_mindie_sd(
+        out_query2, out_key2, out_value2 = torch.ops.mindiesd.la_preprocess(
             self.query, self.key, self.value, self.align_len
         )
         
@@ -71,7 +71,7 @@ class TestLaPreprocessMindieSd(unittest.TestCase):
 
     def test_la_preprocess_with_different_align_len(self):
         align_len_512 = 512
-        out_query, out_key, out_value = torch.ops.mindie.la_preprocess_mindie_sd(
+        out_query, out_key, out_value = torch.ops.mindiesd.la_preprocess(
             self.query, self.key, self.value, align_len_512
         )
         
@@ -84,7 +84,7 @@ class TestLaPreprocessMindieSd(unittest.TestCase):
         key_fp16 = self.key.to(torch.float16)
         value_fp16 = self.value.to(torch.float16)
         
-        out_query, out_key, out_value = torch.ops.mindie.la_preprocess_mindie_sd(
+        out_query, out_key, out_value = torch.ops.mindiesd.la_preprocess(
             query_fp16, key_fp16, value_fp16, self.align_len
         )
         
@@ -93,12 +93,12 @@ class TestLaPreprocessMindieSd(unittest.TestCase):
         self.assertEqual(out_value.dtype, torch.float16)
 
     def test_la_preprocess_integration_with_la_operator(self):
-        processed_query, processed_key, processed_value = torch.ops.mindie.la_preprocess_mindie_sd(
+        processed_query, processed_key, processed_value = torch.ops.mindiesd.la_preprocess(
             self.query, self.key, self.value, self.align_len
         )
         
         scale_value = self.head_dim ** -0.5
-        _, attention_out = torch.ops.mindie.la_mindie_sd(
+        _, attention_out = torch.ops.mindiesd.la(
             processed_query, processed_key, processed_value, None, None, None,
             scale_value, self.head_num, "BNSD", 1.0, 2147483647, 1, True
         )
@@ -108,7 +108,7 @@ class TestLaPreprocessMindieSd(unittest.TestCase):
 
     def test_dtype_conversion(self):
         """测试数据类型转换 - 算子会将bfloat16转换为float16"""
-        out_query, out_key, out_value = torch.ops.mindie.la_preprocess_mindie_sd(
+        out_query, out_key, out_value = torch.ops.mindiesd.la_preprocess(
             self.query, self.key, self.value, self.align_len
         )
         
@@ -118,7 +118,7 @@ class TestLaPreprocessMindieSd(unittest.TestCase):
         self.assertEqual(out_value.dtype, torch.float16)
 
     def test_bsnd_to_bnsd_conversion(self):
-        out_query, out_key, out_value = torch.ops.mindie.la_preprocess_mindie_sd(
+        out_query, out_key, out_value = torch.ops.mindiesd.la_preprocess(
             self.query, self.key, self.value, self.align_len
         )
         
@@ -128,7 +128,7 @@ class TestLaPreprocessMindieSd(unittest.TestCase):
         self.assertEqual(out_query.shape[3], self.head_dim)  # Head dim
 
     def test_memory_layout(self):
-        out_query, out_key, out_value = torch.ops.mindie.la_preprocess_mindie_sd(
+        out_query, out_key, out_value = torch.ops.mindiesd.la_preprocess(
             self.query, self.key, self.value, self.align_len
         )
         
@@ -137,7 +137,7 @@ class TestLaPreprocessMindieSd(unittest.TestCase):
         self.assertTrue(out_value.is_contiguous())
 
     def test_device_placement(self):
-        out_query, out_key, out_value = torch.ops.mindie.la_preprocess_mindie_sd(
+        out_query, out_key, out_value = torch.ops.mindiesd.la_preprocess(
             self.query, self.key, self.value, self.align_len
         )
         
@@ -156,7 +156,7 @@ class TestLaPreprocessMindieSd(unittest.TestCase):
                 value = torch.randn((batch, self.kvseqlen, self.head_num, self.head_dim), 
                                   device=self.device, dtype=self.dtype)
                 
-                out_query, out_key, out_value = torch.ops.mindie.la_preprocess_mindie_sd(
+                out_query, out_key, out_value = torch.ops.mindiesd.la_preprocess(
                     query, key, value, self.align_len
                 )
                 
@@ -181,7 +181,7 @@ class TestLaPreprocessMindieSd(unittest.TestCase):
                 value = torch.randn((self.batch, self.kvseqlen, head_num, self.head_dim), 
                                   device=self.device, dtype=self.dtype)
                 
-                out_query, out_key, out_value = torch.ops.mindie.la_preprocess_mindie_sd(
+                out_query, out_key, out_value = torch.ops.mindiesd.la_preprocess(
                     query, key, value, self.align_len
                 )
                 
@@ -206,7 +206,7 @@ class TestLaPreprocessMindieSd(unittest.TestCase):
                 value = torch.randn((self.batch, kvseqlen, self.head_num, self.head_dim), 
                                   device=self.device, dtype=self.dtype)
                 
-                out_query, out_key, out_value = torch.ops.mindie.la_preprocess_mindie_sd(
+                out_query, out_key, out_value = torch.ops.mindiesd.la_preprocess(
                     query, key, value, self.align_len
                 )
                 

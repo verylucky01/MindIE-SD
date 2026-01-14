@@ -85,7 +85,7 @@ class TestLaMindieSd(unittest.TestCase):
 
     def test_la_mindie_sd_output_shape(self):
         query, key, value = self.la_preprocess_input()
-        _, attention_out = torch.ops.mindie.la_mindie_sd(
+        _, attention_out = torch.ops.mindiesd.la(
             query, key, value, None, None, None,
             self.scale_value, self.head_num, "BNSD", 1.0, 2147483647, 1, True
         )
@@ -95,12 +95,12 @@ class TestLaMindieSd(unittest.TestCase):
 
     def test_la_mindie_sd_consistency(self):
         query, key, value = self.la_preprocess_input()
-        _, output1 = torch.ops.mindie.la_mindie_sd(
+        _, output1 = torch.ops.mindiesd.la(
             query, key, value, None, None, None,
             self.scale_value, self.head_num, "BNSD", 1.0, 2147483647, 1, True
         )
         attention_out1 = self.la_postprocess_output(output1)
-        _, output2 = torch.ops.mindie.la_mindie_sd(
+        _, output2 = torch.ops.mindiesd.la(
             query, key, value, None, None, None,
             self.scale_value, self.head_num, "BNSD", 1.0, 2147483647, 1, True
         )
@@ -111,7 +111,7 @@ class TestLaMindieSd(unittest.TestCase):
     def test_la_mindie_sd_vs_npu_fusion_attention(self):
         """对比la_mindie_sd与npu_fusion_attention的结果"""
         query, key, value = self.la_preprocess_input()
-        _, attention_out = torch.ops.mindie.la_mindie_sd(
+        _, attention_out = torch.ops.mindiesd.la(
             query, key, value, None, None, None,
             self.scale_value, self.head_num, "BNSD", 1.0, 2147483647, 1, True
         )

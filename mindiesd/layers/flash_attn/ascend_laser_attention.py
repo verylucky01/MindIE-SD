@@ -94,11 +94,12 @@ class AscendLaserAttention(AttentionOperateBase):
             mask: torch.Tensor = None,
             scale: torch.Tensor = None
     ) -> torch.Tensor:
-
-        # input layout is bsnds
-        query = query.transpose(1, 2)
-        key = key.transpose(1, 2)
-        value = value.transpose(1, 2)
+        head_first = attn_param.head_first
+        if not head_first:
+            # input layout is bsnd
+            query = query.transpose(1, 2)
+            key = key.transpose(1, 2)
+            value = value.transpose(1, 2)
         if mask is not None:
             mask = ~mask.to(torch.bool)
 
@@ -113,5 +114,6 @@ class AscendLaserAttention(AttentionOperateBase):
         )
         out = AscendLaserAttention.la_postprocess_output(output1, query.dtype, attn_param.q_seqlen, attn_param.head_dim)
 
-        out = out.transpose(1, 2)
+        if not head_first:
+            out = out.transpose(1, 2)
         return out

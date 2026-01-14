@@ -18,7 +18,7 @@ from torch.library import Library
 from ..utils import file_utils, ParametersInvalid
 
 
-MINDIE_NS = "mindie"  # 固定命名空间，与 torch.ops.mindie 对应
+MINDIE_NS = "mindiesd"  # 固定命名空间，与 torch.ops.mindiesd 对应
 
 
 def _load_mindie_ops_library() -> None:
@@ -51,13 +51,13 @@ def check_mindie_operator_exists(op_name: str) -> bool:
     """Check if a MindIE operator is registered in PyTorch.
     
     Args:
-        op_name: Full name of the operator (e.g. "rope_mindie_sd", "la_mindie_sd")
+        op_name: Full name of the operator (e.g. "rope", "la")
     
     Returns:
         True if the operator exists, False otherwise.
     """
     try:
-        getattr(torch.ops.mindie, op_name)
+        getattr(torch.ops.mindiesd, op_name)
         return True
     except AttributeError:
         return False
@@ -103,12 +103,12 @@ def register_mindie_fake_op(op_name: str):
     """Decorator to register a fake implementation for a MindIE operator.
     
     Usage:
-        @register_mindie_fake_op("rope_mindie_sd")
+        @register_mindie_fake_op("rope")
         def rope_fake(x, cos, sin, mode):
             ...
     
     Args:
-        op_name: Full name of the operator (e.g. "rope_mindie_sd", "la_mindie_sd")
+        op_name: Full name of the operator (e.g. "rope", "la")
     
     Returns:
         Decorator function that registers the fake implementation.

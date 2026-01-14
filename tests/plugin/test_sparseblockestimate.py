@@ -189,7 +189,7 @@ class TestSparseBlockEstimate(unittest.TestCase):
 
     def test_bsa_estimate_mindie_sd_output_shape(self):
         query, key = self.bsa_estimate_preprocess_input()
-        smask, sct = torch.ops.mindie.sparse_block_estimate_mindie_sd(
+        smask, sct = torch.ops.mindiesd.sparse_block_estimate(
             query=query.to(self.device),
             key=key.to(self.device),
             actual_seq_lengths=None, actual_seq_lengths_kv=None,
@@ -212,7 +212,7 @@ class TestSparseBlockEstimate(unittest.TestCase):
     def test_bsa_estimate_mindie_sd_vs_sparse_estimate_cpu(self):
         """对比 sparse_block_estimate_mindie_sd 与 cpu 实现的结果"""
         query, key = self.bsa_estimate_preprocess_input()
-        smask, sct = torch.ops.mindie.sparse_block_estimate_mindie_sd(
+        smask, sct = torch.ops.mindiesd.sparse_block_estimate(
             query=query.to(self.device),
             key=key.to(self.device),
             actual_seq_lengths=None, actual_seq_lengths_kv=None,
@@ -251,7 +251,7 @@ class TestSparseBlockEstimate(unittest.TestCase):
     def test_invalid_layout(self):
         query, key = self.bsa_estimate_preprocess_input()
         with self.assertRaises(RuntimeError):
-            smask, sct = torch.ops.mindie.sparse_block_estimate_mindie_sd(
+            smask, sct = torch.ops.mindiesd.sparse_block_estimate(
                 query=query.to(self.device),
                 key=key.to(self.device),
                 actual_seq_lengths=None, actual_seq_lengths_kv=None,

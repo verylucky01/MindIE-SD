@@ -15,6 +15,7 @@ from pathlib import Path
 
 import torch
 from ..utils import ParametersInvalid, file_utils
+from . import _custom_ops as ops
 
 current_path = Path(__file__).resolve()
 if len(current_path.parents) < 2:
@@ -97,10 +98,14 @@ def layernorm_scale_shift(
         else:
             weight = None
             bias = None
-        out = torch.ops.mindie.adaln_mindie_sd(
-            x=x, scale=scale, shift=shift,
-            weight=weight, bias=bias, epsilon=layernorm.eps
-            )
+        out = ops.adaln(
+            x=x, 
+            scale=scale, 
+            shift=shift,
+            weight=weight, 
+            bias=bias, 
+            epsilon=layernorm.eps
+        )
     else:
         if scale.dim() == 2:
             scale = scale[:, None]

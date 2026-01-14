@@ -29,10 +29,11 @@ WARM_UP_COUNT = 2
 ATTN_DICT = {}
 
 
-def attention_math(query, key, value, attn_mask, scale):
-    query = query.transpose(1, 2)
-    key = key.transpose(1, 2)
-    value = value.transpose(1, 2)
+def attention_math(query, key, value, attn_mask, scale, head_first=False):
+    if not head_first:
+        query = query.transpose(1, 2)
+        key = key.transpose(1, 2)
+        value = value.transpose(1, 2)
     dtype = query.dtype
     device = query.device
     q_seqlen, kv_seqlen = query.size(-2), key.size(-2)
@@ -49,7 +50,8 @@ def attention_math(query, key, value, attn_mask, scale):
     attn = torch.softmax(attn, dim=-1)
     attn = attn.to(dtype=dtype)
     output = attn @ value
-    output = output.transpose(1, 2)
+    if not head_first:
+        output = output.transpose(1, 2)
     return output
 
 
