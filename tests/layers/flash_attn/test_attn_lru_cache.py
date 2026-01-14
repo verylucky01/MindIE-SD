@@ -29,7 +29,7 @@ class TestCacheByAttnParam(unittest.TestCase):
             else:
                 return "case 1"
         
-        param = AttentionParam(20, 16, 64, 128, 128, torch.float32)
+        param = AttentionParam(20, 16, 64, 128, 128, torch.float32, False)
         out = test_cache(param)
         self.assertIn(param.to_hash(), attn_cache)
         self.assertEqual(attn_cache[param.to_hash()], "case 0")

@@ -36,10 +36,12 @@ class FlashAttentionScore(AttentionOperateBase):
         mask: torch.Tensor = None,
         scale: torch.Tensor = None
     ) -> torch.Tensor:
-        # input layout is bsnd
-        query = query.transpose(1, 2)
-        key = key.transpose(1, 2)
-        value = value.transpose(1, 2)
+        head_first = attn_param.head_first
+        if not head_first:
+            # input layout is bsnd
+            query = query.transpose(1, 2)
+            key = key.transpose(1, 2)
+            value = value.transpose(1, 2)
         if mask is not None:
             mask = ~mask.to(torch.bool)
         out = torch_npu.npu_fusion_attention(
@@ -52,7 +54,8 @@ class FlashAttentionScore(AttentionOperateBase):
             pre_tockens=MAX_TOKEN,
             next_tockens=MAX_TOKEN,
             head_num=attn_param.head_num)[0]
-        out = out.transpose(1, 2)
+        if not head_first:
+            out = out.transpose(1, 2)
         return out
 
     @classmethod
@@ -65,6 +68,12 @@ class FlashAttentionScore(AttentionOperateBase):
         mask: torch.Tensor = None,
         scale: torch.Tensor = None
     ) -> torch.Tensor:
+        head_first = attn_param.head_first
+        if head_first:
+            # input layout is bnsd
+            query = query.transpose(1, 2)
+            key = key.transpose(1, 2)
+            value = value.transpose(1, 2)
         # input layout is bsnd
         if mask is not None:
             mask = ~mask.to(torch.bool)
@@ -78,6 +87,8 @@ class FlashAttentionScore(AttentionOperateBase):
             pre_tockens=MAX_TOKEN,
             next_tockens=MAX_TOKEN,
             head_num=attn_param.head_num)[0]
+        if head_first:
+            out = out.transpose(1, 2)
         return out
 
     @classmethod
@@ -90,6 +101,11 @@ class FlashAttentionScore(AttentionOperateBase):
         mask: torch.Tensor = None,
         scale: torch.Tensor = None
     ) -> torch.Tensor:
+        head_first = attn_param.head_first
+        if head_first:
+            query = query.transpose(1, 2)
+            key = key.transpose(1, 2)
+            value = value.transpose(1, 2)
         # input layout is bsnd
         query = query.reshape(attn_param.batch_size, attn_param.q_seqlen, attn_param.head_num * attn_param.head_dim)
         key = key.reshape(attn_param.batch_size, attn_param.kv_seqlen, attn_param.head_num * attn_param.head_dim)
@@ -106,5 +122,9 @@ class FlashAttentionScore(AttentionOperateBase):
             pre_tockens=MAX_TOKEN,
             next_tockens=MAX_TOKEN,
             head_num=attn_param.head_num)[0]
-        out = out.reshape(attn_param.batch_size, attn_param.q_seqlen, attn_param.head_num, attn_param.head_dim)
+        if not head_first:
+            out = out.reshape(attn_param.batch_size, attn_param.q_seqlen, attn_param.head_num, attn_param.head_dim)
+        else:
+            out = out.reshape(attn_param.batch_size, attn_param.q_seqlen, attn_param.head_num, attn_param.head_dim)
+            out = out.transpose(1, 2)
         return out

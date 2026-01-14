@@ -26,7 +26,7 @@ class TestAttentionFunction(unittest.TestCase):
         """设备获取为910时,返回非空结果"""
         sys.modules['torch_npu'].npu.get_device_name.return_value = 'Ascend910'
 
-        attn_param = AttentionParam(2, 16, 64, 128, 128, torch.float16)
+        attn_param = AttentionParam(2, 16, 64, 128, 128, torch.float16, False)
         query = torch.randn([2, 32, 16, 64], dtype=torch.float16)
         key = torch.randn([2, 32, 16, 64], dtype=torch.float16)
         value = torch.randn([2, 32, 16, 64], dtype=torch.float16)

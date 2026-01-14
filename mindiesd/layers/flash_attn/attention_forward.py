@@ -18,9 +18,9 @@ from .attention_func import (
 from ...utils.exception import ParametersInvalid
 
 
-def attention_forward(query, key, value, attn_mask=None, scale=None, fused=True, **kwargs):
+def attention_forward(query, key, value, attn_mask=None, scale=None, fused=True, head_first=False, **kwargs):
     """
-    Attention forward function for npu. Input layout must be 'BSND'.
+    Attention forward function for npu. Input layout must be 'BSND' or 'BNSD'.
     Args:
         query ('torch.Tensor'):
             The input query of attention calculation formula.
@@ -34,6 +34,8 @@ def attention_forward(query, key, value, attn_mask=None, scale=None, fused=True,
             The input scale of attention calculation formula.
         fused ('bool', *optional*, defaults to `True`):
             Whether to use the fusion operator. Set 'False' to use original calculation.
+        head_first (bool):
+            In the layout of q k v, if N is before S, set to True; otherwise, set to False.
         kwargs:
             opt_mode ('str', *optional*, defaults to `runtime`):
                 The mode to dispatch fused op. Only takes effect when fused is set to 'True'.
@@ -49,12 +51,16 @@ def attention_forward(query, key, value, attn_mask=None, scale=None, fused=True,
 
     input_params = (query, key, value, attn_mask, scale, fused)
     check_input_params(input_params)
-    attn_param = AttentionParam(
-        query.shape[0], query.shape[-2], query.shape[-1], query.shape[1], key.shape[1], query.dtype)
+    if not head_first:
+        attn_param = AttentionParam(
+            query.shape[0], query.shape[-2], query.shape[-1], query.shape[1], key.shape[1], query.dtype, head_first)
+    else:
+        attn_param = AttentionParam(
+            query.shape[0], query.shape[1], query.shape[-1], query.shape[2], key.shape[2], query.dtype, head_first)
     if scale is None:
         scale = attn_param.head_dim ** -0.5
     if not fused:
-        return attention_math(query, key, value, attn_mask, scale)
+        return attention_math(query, key, value, attn_mask, scale, head_first)
 
     opt_mode = kwargs.get("opt_mode", "runtime")
 
