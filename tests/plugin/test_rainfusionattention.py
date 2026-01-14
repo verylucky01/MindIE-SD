@@ -75,7 +75,7 @@ class TestRainFusionAttention(unittest.TestCase):
         return select_idx, select_num_idx
     
     def test_rainfusionattention_vs_fusionattention(self):
-        ra, _ = torch.ops.mindie.rainfusionattention_mindie_sd(
+        ra, _ = torch.ops.mindiesd.rainfusionattention(
             self.q_tnd, self.k_tnd, self.v_tnd,
             self.select_idx, self.select_num_idx,
             self.block_shape,
@@ -100,7 +100,7 @@ class TestRainFusionAttention(unittest.TestCase):
         
     def test_ra_output_shape(self):
             expected_shape = (self.batch_size * self.q_seqlen, self.head, self.headdim)
-            ra, _ = torch.ops.mindie.rainfusionattention_mindie_sd(
+            ra, _ = torch.ops.mindiesd.rainfusionattention(
                 self.q_tnd, self.k_tnd, self.v_tnd,
                 self.select_idx, self.select_num_idx,
                 self.block_shape,
@@ -117,7 +117,7 @@ class TestRainFusionAttention(unittest.TestCase):
     
     def test_ra_invalid_input_dim(self):
         with self.assertRaises(RuntimeError):
-            ra, _ = torch.ops.mindie.rainfusionattention_mindie_sd(
+            ra, _ = torch.ops.mindiesd.rainfusionattention(
                 self.q, self.k, self.v,
                 self.select_idx, self.select_num_idx,
                 self.block_shape,
@@ -133,7 +133,7 @@ class TestRainFusionAttention(unittest.TestCase):
     
     def test_ra_invalid_inputlayout(self):
         with self.assertRaises(RuntimeError):
-            ra, _ = torch.ops.mindie.rainfusionattention_mindie_sd(
+            ra, _ = torch.ops.mindiesd.rainfusionattention(
                 self.q_tnd, self.k_tnd, self.v_tnd,
                 self.select_idx, self.select_num_idx,
                 self.block_shape,

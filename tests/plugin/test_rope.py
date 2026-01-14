@@ -37,20 +37,20 @@ class TestRopeMindieSd(unittest.TestCase):
         self.sin = torch.randn(self.cos_sin_shape, device=self.device, dtype=self.dtype)
 
     def test_rope_mindie_sd_output_shape(self):
-        output = torch.ops.mindie.rope_mindie_sd(self.x, self.cos, self.sin, mode=1)
+        output = torch.ops.mindiesd.rope(self.x, self.cos, self.sin, mode=1)
         expected_shape = self.x_shape
         self.assertEqual(output.shape, expected_shape,
                          "Output shape does not match expected shape.")
 
     def test_rope_mindie_sd_consistency(self):
-        output1 = torch.ops.mindie.rope_mindie_sd(self.x, self.cos, self.sin, mode=1)
-        output2 = torch.ops.mindie.rope_mindie_sd(self.x, self.cos, self.sin, mode=1)
+        output1 = torch.ops.mindiesd.rope(self.x, self.cos, self.sin, mode=1)
+        output2 = torch.ops.mindiesd.rope(self.x, self.cos, self.sin, mode=1)
         self.assertTrue(torch.allclose(output1, output2),
                         "Multiple runs of the operator produce inconsistent results.")
 
     def test_rope_mindie_sd_mode_0_and_1(self):
-        output_mode_0 = torch.ops.mindie.rope_mindie_sd(self.x, self.cos, self.sin, mode=0)
-        output_mode_1 = torch.ops.mindie.rope_mindie_sd(self.x, self.cos, self.sin, mode=1)
+        output_mode_0 = torch.ops.mindiesd.rope(self.x, self.cos, self.sin, mode=0)
+        output_mode_1 = torch.ops.mindiesd.rope(self.x, self.cos, self.sin, mode=1)
         self.assertFalse(torch.allclose(output_mode_0, output_mode_1),
                          "Outputs for different modes should be different.")
 

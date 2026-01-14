@@ -21,10 +21,10 @@ def rope(
     sin: torch.Tensor,
     mode: int
 ) -> torch.Tensor:
-    return getattr(torch.ops.mindie, "rope_mindie_sd")(x, cos, sin, mode)
+    return getattr(torch.ops.mindiesd, "rope")(x, cos, sin, mode)
 
 
-@register_ops.register_mindie_fake_op("rope_mindie_sd")
+@register_ops.register_mindie_fake_op("rope")
 def rope_fake(
     x: torch.Tensor,
     cos: torch.Tensor,
@@ -49,7 +49,7 @@ def laser_attention(
     next_tokens: int = 1,
     is_high_precision: bool = True,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    return getattr(torch.ops.mindie, "la_mindie_sd")(
+    return getattr(torch.ops.mindiesd, "la")(
         query=query,
         key=key,
         value=value,
@@ -66,7 +66,7 @@ def laser_attention(
     )
 
 
-@register_ops.register_mindie_fake_op("la_mindie_sd")
+@register_ops.register_mindie_fake_op("la")
 def attention_fake(
     query: torch.Tensor,
     key: torch.Tensor,
@@ -96,10 +96,10 @@ def laser_attention_preprocess(
     value: torch.Tensor,
     align_len: int
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    return getattr(torch.ops.mindie, "la_preprocess_mindie_sd")(query, key, value, align_len)
+    return getattr(torch.ops.mindiesd, "la_preprocess")(query, key, value, align_len)
 
 
-@register_ops.register_mindie_fake_op("la_preprocess_mindie_sd")
+@register_ops.register_mindie_fake_op("la_preprocess")
 def attention_preprocess_fake(
     query: torch.Tensor,
     key: torch.Tensor,
@@ -158,7 +158,7 @@ def rain_fusion_attention(
     inner_precise: int = 1,
     block_size: int = 0
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    return getattr(torch.ops.mindie, "rainfusionattention_mindie_sd")(
+    return getattr(torch.ops.mindiesd, "rainfusionattention")(
         query=query,
         key=key,
         value=value,
@@ -179,7 +179,7 @@ def rain_fusion_attention(
     )
 
 
-@register_ops.register_mindie_fake_op("rainfusionattention_mindie_sd")
+@register_ops.register_mindie_fake_op("rainfusionattention")
 def rain_fusion_attention_fake(
     query: torch.Tensor,
     key: torch.Tensor,
@@ -224,7 +224,7 @@ def sparse_block_estimate(
     keep_recent: bool = True,
     row_sparse: float = 1.0
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    return getattr(torch.ops.mindie, "sparse_block_estimate_mindie_sd")(
+    return getattr(torch.ops.mindiesd, "sparse_block_estimate")(
         query=query,
         key=key,
         actual_seq_lengths=actual_seq_lengths,
@@ -243,7 +243,7 @@ def sparse_block_estimate(
     )
 
 
-@register_ops.register_mindie_fake_op("sparse_block_estimate_mindie_sd")
+@register_ops.register_mindie_fake_op("sparse_block_estimate")
 def sparse_block_estimate_fake(
     query: torch.Tensor,
     key: torch.Tensor,
@@ -302,7 +302,7 @@ def block_sparse_attention(
     actual_seq_lengths: Optional[List[int]] = None,
     actual_seq_lengths_kv: Optional[List[int]] = None,
 ) -> torch.Tensor:
-    return getattr(torch.ops.mindie, "block_sparse_attention")(
+    return getattr(torch.ops.mindiesd, "block_sparse_attention")(
         query=query,
         key=key,
         value=value,
@@ -345,8 +345,26 @@ def block_sparse_attention_fake(
     return output
 
 
-@register_ops.register_mindie_fake_op("adaln_mindie_sd")
-def adaln_mindie_sd_fake(
+def adaln(
+    x: torch.Tensor,
+    scale: torch.Tensor,
+    shift: torch.Tensor,
+    weight: torch.Tensor | None = None,
+    bias: torch.Tensor | None = None,
+    epsilon: float = 1e-05
+) -> torch.Tensor:
+    return getattr(torch.ops.mindiesd, "adaln")(
+        x=x, 
+        scale=scale, 
+        shift=shift,
+        weight=weight, 
+        bias=bias, 
+        epsilon=epsilon
+    )
+
+
+@register_ops.register_mindie_fake_op("adaln")
+def adaln_fake(
     x: torch.Tensor,
     scale: torch.Tensor,
     shift: torch.Tensor,

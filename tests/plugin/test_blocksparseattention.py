@@ -149,7 +149,7 @@ class TestBsaMindieSd(unittest.TestCase):
         smask = smask.to(torch.int8)
         sparse_count_table = smask.sum(dim=-1, dtype=torch.int32)
 
-        bsa_npu = torch.ops.mindie.block_sparse_attention(
+        bsa_npu = torch.ops.mindiesd.block_sparse_attention(
             query=query.to(self.device),
             key=key.to(self.device),
             value=value.to(self.device),
