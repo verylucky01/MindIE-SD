@@ -28,10 +28,8 @@ MAX_TOKEN = 2147483647
 def check_params(input_layout, sparse_type):
     if input_layout not in ['BSND', 'BNSD']:
         raise ParametersInvalid(f"The input_layout must in ['BSND', 'BNSD'], but got {input_layout}.")
-    if sparse_type == "rf_v2":
-        if input_layout != "BSND":
-            raise ParametersInvalid(f"When sparse_type is 'rf_v2', the input_layout must be 'BSND', \
-                                    but got {input_layout}.")
+    if sparse_type not in [None, 'rf_v2', 'ada_bsa']:
+        raise ParametersInvalid(f"sparse_type must be None, 'rf_v2' or 'ada_bsa', but got {sparse_type}.")
 
 
 def sparse_attention(
@@ -99,26 +97,33 @@ def sparse_attention(
             Sparse ratio, the value range is [0, 1], where 0 represents not using sparse algo.
     """
     check_params(input_layout, sparse_type)
-    head_dim = q.shape[-1]
+    batch, head_dim = q.shape[0], q.shape[-1]
     scale = head_dim ** -0.5 if scale is None else scale
 
     if sparse_type == "rf_v2":
-        q, k, v, qkv_pool = do_tensor_rearrange_pooling(q, k, v, txt_len, block_size, latent_shape_q, latent_shape_k)
+        q, k, v, qkv_pool = do_tensor_rearrange_pooling(
+            q, k, v, txt_len, block_size, latent_shape_q, latent_shape_k, input_layout
+        )
         select_idx, select_num_idx = get_blockwise_mask(
-                qkv_pool, txt_len, sparsity, scale, block_size, latent_shape_q, latent_shape_k)
-        
-        batch, q_seq, kv_seq = k.shape[0], q.shape[1], k.shape[1]
-        actual_seq_lengths = [q_seq for _ in range(batch)] # 待确认怎么计算
+                qkv_pool, txt_len, sparsity, scale, block_size, latent_shape_q, latent_shape_k, input_layout)
+
+        if input_layout == "BSND":
+            q_seq, kv_seq = q.shape[1], k.shape[1]
+            layout = "TND"
+            q = q.reshape(-1, head_num, head_dim)
+            k = k.reshape(-1, head_num, head_dim)
+            v = v.reshape(-1, head_num, head_dim)
+        else:
+            q_seq, kv_seq = q.shape[2], k.shape[2]
+            layout = input_layout
+        actual_seq_lengths = [q_seq for _ in range(batch)]
         actual_seq_lengths_kv = [kv_seq for _ in range(batch)]
 
-        q = q.reshape(-1, head_num, head_dim)
-        k = k.reshape(-1, head_num, head_dim)
-        v = v.reshape(-1, head_num, head_dim)
         out = rain_fusion_attention(
             q, k, v,
             scale=scale,
             head_num=head_num,
-            input_layout="TND", # 单算子当前只支持TND
+            input_layout=layout,
             select_idx=select_idx,
             select_num_idx=select_num_idx,
             blockshape=[block_size, block_size],
@@ -126,8 +131,9 @@ def sparse_attention(
             actual_seq_lengths_kv=actual_seq_lengths_kv,
             inner_precise=inner_precise
         )
-        out = out.reshape(batch, q_seq, head_num, head_dim)
-        out = do_tensor_inv_rearrange(out, txt_len, latent_shape_q, latent_shape_k)
+        if layout == "TND":
+            out = out.reshape(batch, q_seq, head_num, head_dim)
+        out = do_tensor_inv_rearrange(out, txt_len, latent_shape_q, latent_shape_k, input_layout)
     elif sparse_type == "ada_bsa":
         smask, sct = get_estimate_mask(
             q, k, v,

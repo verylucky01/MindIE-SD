@@ -40,11 +40,10 @@ std::tuple<at::Tensor, at::Tensor> rainfusionattention_mindie_sd_impl_npu(
     int64_t head_num, int64_t mask_type, double scale,
     int64_t inner_precise, int64_t block_size)
 {
-    TORCH_CHECK(query.dim() == EXPECTED_TENSOR_DIMENSION, "Query must be 3D tensor.");
-    TORCH_CHECK(key.dim() == EXPECTED_TENSOR_DIMENSION, "Key must be 3D tensor.");
-    TORCH_CHECK(value.dim() == EXPECTED_TENSOR_DIMENSION, "Value must be 3D tensor.");
-    TORCH_CHECK(q_input_layout == "TND", "q_input_layout must be 'TND'.");
-    TORCH_CHECK(kv_input_layout == "TND", "kv_input_layout must be 'TND'.");
+    TORCH_CHECK(q_input_layout == "TND" || q_input_layout == "BNSD",
+        "q_input_layout only supports 'TND' and 'BNSD' now.");
+    TORCH_CHECK(kv_input_layout == "TND" || kv_input_layout == "BNSD",
+        "kv_input_layout only supports 'TND' and 'BNSD' now.");
     const at::Tensor& attenMask = c10::value_or_else(attn_mask, [] {return at::Tensor();});
     auto actualSeqLengths = actual_seq_qlen.value_or(at::IntArrayRef{});
     auto actualSeqLengthsKv = actual_seq_kvlen.value_or(at::IntArrayRef{});
