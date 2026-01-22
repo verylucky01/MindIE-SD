@@ -97,6 +97,33 @@ class TestRainFusionAttention(unittest.TestCase):
                     head_num=self.head)[0]
         result, _, max_err = data_compare(ra.cpu(), fascore.cpu())
         self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
+    
+    def test_rainfusionattention_bnsd(self):
+        q = self.q.transpose(1, 2)
+        k = self.k.transpose(1, 2)
+        v = self.v.transpose(1, 2)
+        ra, _ = torch.ops.mindie.rainfusionattention_mindie_sd(
+            q, k, v,
+            self.select_idx, self.select_num_idx,
+            self.block_shape,
+            attn_mask=None,
+            actual_seq_qlen=self.actual_seq_lengths,
+            actual_seq_kvlen=self.actual_seq_lengths_kv,
+            block_table=None,
+            q_input_layout="BNSD",
+            kv_input_layout="BNSD",
+            head_num=self.head,
+            mask_type=0, scale=self.scale,
+            inner_precise=0, block_size=0)
+        fascore = torch_npu.npu_fusion_attention(
+                    q, k, v,
+                    input_layout="BNSD",
+                    scale=self.headdim ** -0.5,
+                    pre_tockens=2147483647,
+                    next_tockens=2147483647,
+                    head_num=self.head)[0]
+        result, _, max_err = data_compare(ra.cpu(), fascore.cpu())
+        self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
         
     def test_ra_output_shape(self):
             expected_shape = (self.batch_size * self.q_seqlen, self.head, self.headdim)
@@ -115,7 +142,7 @@ class TestRainFusionAttention(unittest.TestCase):
                 inner_precise=0, block_size=0)
             self.assertEqual(ra.shape, expected_shape, "Output shape does not match expected shape.")
     
-    def test_ra_invalid_input_dim(self):
+    def test_ra_invalid_inputlayout(self):
         with self.assertRaises(RuntimeError):
             ra, _ = torch.ops.mindiesd.rainfusionattention(
                 self.q, self.k, self.v,
@@ -125,24 +152,8 @@ class TestRainFusionAttention(unittest.TestCase):
                 actual_seq_qlen=self.actual_seq_lengths,
                 actual_seq_kvlen=self.actual_seq_lengths_kv,
                 block_table=None,
-                q_input_layout="TND",
-                kv_input_layout="TND",
-                head_num=self.head,
-                mask_type=0, scale=self.scale,
-                inner_precise=0, block_size=0)
-    
-    def test_ra_invalid_inputlayout(self):
-        with self.assertRaises(RuntimeError):
-            ra, _ = torch.ops.mindiesd.rainfusionattention(
-                self.q_tnd, self.k_tnd, self.v_tnd,
-                self.select_idx, self.select_num_idx,
-                self.block_shape,
-                attn_mask=None,
-                actual_seq_qlen=self.actual_seq_lengths,
-                actual_seq_kvlen=self.actual_seq_lengths_kv,
-                block_table=None,
-                q_input_layout="BNSD",
-                kv_input_layout="BNSD",
+                q_input_layout="BSND",
+                kv_input_layout="BSND",
                 head_num=self.head,
                 mask_type=0, scale=self.scale,
                 inner_precise=0, block_size=0)

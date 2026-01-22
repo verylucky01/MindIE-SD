@@ -94,5 +94,17 @@
 
 注：\* 号表示最优加速效果
 
+## Paper Citations
+```
+@misc{RainFusion2.0@2025,
+    title = {RainFusion2.0: Temporal-Spatial Awareness and Hardware-Efficient Block-wise Sparse Attention},
+    url = {https://gitcode.com/Ascend/MindIE-SD.git},
+    note = {Open-source software available at https://gitcode.com/Ascend/MindIE-SD.git},
+    author = {Aiyue Chen and others},
+    year = {2025}
+    }
+```
+
 ## 联系我们
 ![](./docs/figures/contact-us.png)
+![](./docs/figures/contact-us-MindIESD.png)

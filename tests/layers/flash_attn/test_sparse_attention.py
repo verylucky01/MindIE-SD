@@ -69,7 +69,7 @@ class TestSparseAttention(unittest.TestCase):
         )
         self.assertIsNotNone(out)
     
-    def test_rf_v2_result(self):
+    def test_rf_v2_BSND_result(self):
         out = sparse_attention(
             self.q, self.k, self.v,
             scale=self.scale,
@@ -85,6 +85,33 @@ class TestSparseAttention(unittest.TestCase):
         fascore = torch_npu.npu_fusion_attention(
                     self.q, self.k, self.v,
                     input_layout="BSND",
+                    scale=self.scale,
+                    pre_tockens=2147483647,
+                    next_tockens=2147483647,
+                    head_num=self.head)[0]
+
+        result, _, max_err = data_compare(out.cpu(), fascore.cpu())
+        self.assertEqual(result, "success", msg=f"Data compare failed. Max error is: {max_err}")
+    
+    def test_rf_v2_BNSD_result(self):
+        q = self.q.transpose(1, 2)
+        k = self.k.transpose(1, 2)
+        v = self.v.transpose(1, 2)
+        out = sparse_attention(
+            q, k, v,
+            scale=self.scale,
+            head_num=self.head,
+            input_layout="BNSD",
+            inner_precise=0,
+            sparse_type="rf_v2",
+            txt_len=0,
+            latent_shape_q=(self.t, self.h, self.w),
+            latent_shape_k=(self.t, self.h, self.w),
+            sparsity=0.0
+        )
+        fascore = torch_npu.npu_fusion_attention(
+                    q, k, v,
+                    input_layout="BNSD",
                     scale=self.scale,
                     pre_tockens=2147483647,
                     next_tockens=2147483647,
