@@ -21,7 +21,7 @@ from setuptools import setup, find_packages
 from setuptools.command.build_py import build_py as _build_py
 from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
 
-os.environ["SOURCE_DATE_EPOCH"] = "0"
+os.environ["SOURCE_DATE_EPOCH"] = "315532800"
 MINDIE_SD_VERSION_DEFAULT = "2.3.0"
 VERSION_ENV = "MINDIE_SD_VERSION_OVERRIDE"
 
