@@ -28,7 +28,7 @@ set +e
 source $_ASCEND_INSTALL_PATH/bin/setenv.bash
 set -e
 
-USER_ABI_VERSION_RAW=$(python3 -c "import torch; print(1 if torch.compiled_with_cxx11_abi() else 0)" 2>/dev/null)
+USER_ABI_VERSION_RAW=$(python3 -c "import torch; print(1 if torch.compiled_with_cxx11_abi() else 0)")
 if [ $? -ne 0 ]; then
     echo "Error: Failed to retrieve PyTorch ABI version!"
     echo "Possible reasons: PyTorch is not installed, or the version is too old (missing the _GLIBCXX_USE_CXX11_ABI attribute)."
