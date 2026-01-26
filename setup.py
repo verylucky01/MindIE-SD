@@ -55,6 +55,20 @@ def copy_so_files(src_dir, dest_dir):
         logging.info(f"Copied {src_file} to {dest_file}")
 
 
+def ensure_plugin_init():
+    plugin_dir = os.path.join(os.getcwd(), 'mindiesd/plugin')
+    init_file = os.path.join(plugin_dir, '__init__.py')
+    
+    os.makedirs(plugin_dir, exist_ok=True)   
+    if not os.path.isfile(init_file):
+        with open(init_file, 'w') as f:
+            pass
+    else:
+        os.remove(init_file)
+        with open(init_file, 'w') as f:
+            pass
+
+
 class CustomBuildPy(_build_py):
     def run(self):
         # 1. 进入 build 目录执行构建脚本
@@ -90,6 +104,7 @@ class BDistWheel(_bdist_wheel):
 if __name__ == "__main__":
     requirements = ["torch", "torch_npu"]
     mindie_sd_version = get_mindiesd_version()
+    ensure_plugin_init()
 
     setup(
         name="mindiesd",
