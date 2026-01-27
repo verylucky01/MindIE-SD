@@ -106,5 +106,5 @@
 ```
 
 ## 联系我们
-![](./docs/figures/contact-us.png)
-![](./docs/figures/contact-us-MindIESD.png)
+![](./docs/figures/contact-us.jpg)
+![](./docs/figures/contact-us-MindIESD.jpg)
