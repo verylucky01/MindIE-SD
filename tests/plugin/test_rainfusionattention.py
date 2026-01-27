@@ -102,7 +102,7 @@ class TestRainFusionAttention(unittest.TestCase):
         q = self.q.transpose(1, 2)
         k = self.k.transpose(1, 2)
         v = self.v.transpose(1, 2)
-        ra, _ = torch.ops.mindie.rainfusionattention_mindie_sd(
+        ra, _ = torch.ops.mindiesd.rainfusionattention(
             q, k, v,
             self.select_idx, self.select_num_idx,
             self.block_shape,
