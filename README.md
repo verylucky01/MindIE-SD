@@ -31,12 +31,17 @@
 本章节以 **Wan2.1** 模型为例，展示如何使用 MindIE SD 进行文本生成视频，关于该模型的更多推理内容请参见 [Modelers - MindIE/Wan2.1](https://modelers.cn/models/MindIE/Wan2.1)。
 
 1.  源码编译安装 MindIE SD（镜像 / 软件包安装方式详见 [developer_guide](docs/developer_guide.md)）
+    ```bash	 
+    git clone https://gitcode.com/Ascend/MindIE-SD.git && cd MindIE-SD	 
+    python setup.py bdist_wheel 
+ 
+    cd dist 
+    pip install mindiesd-*.whl 
+    ```
+    
+    **注：** 若 torch 版本为 2.6，则可直接 pip 安装 MindIE SD，无需源码编译。
     ```bash
-    git clone https://gitcode.com/Ascend/MindIE-SD.git && cd MindIE-SD
-    python setup.py bdist_wheel
-
-    cd dist
-    pip install mindiesd-*.whl
+    pip install --trusted-host ascend.devcloud.huaweicloud.com -i https://ascend.devcloud.huaweicloud.com/pypi/simple/ mindiesd
     ```
 
 2.  安装模型所需依赖并执行推理。
