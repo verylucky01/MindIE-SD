@@ -1,6 +1,6 @@
-# README
+# MindIE SD
 
-## 简介
+## 🚀 简介
 
 **MindIE SD**（Mind Inference Engine Stable Diffusion）是 MindIE 的视图生成推理模型套件，它的目标是为稳定扩散（**Stable Diffusion**, SD）系列大模型提供在昇腾硬件及其软件栈上的端到端推理解决方案。该软件系统内部集成了各功能模块，并对外提供统一的编程接口。
 
@@ -13,30 +13,34 @@
 
 </div>
 
-## Latest News
+## 📢 Latest News
 
 -   12/31/2025: MindIE SD提供稀疏Attention计算能力
 -   12/25/2025：vLLM Omni x MindIE SD 实现 Qwen-Image-Edit-2511 / Qwen-Image-Layered 昇腾原生高性能推理
 -   11/30/2025：MindIE SD 正式宣布开源并面向公众开放！[会议日历](https://meeting.ascend.osinfra.cn/?sig=sig-MindIE-SD)
 
-## 架构介绍及关键特性
+## 🚀 架构介绍及关键特性
 
-详见[架构介绍](docs/architecture.md)（包含：关键特性，目录设计等）
+MindIE SD 架构和关键特性详见[架构介绍](docs/architecture.md)。
+MindIE SD 支持🤗 [魔乐社区](https://modelers.cn/models?name=MindIE&page=1&size=16) 🤗 vLLM Omni 🤗 Cache Dit 等框架/社区，现已支持主流扩散模型，对于部分 diffusers 模型进行了昇腾硬件亲和的加速改造，详见[模型/框架支持情况](docs/features/supported_matrix.md)，模型也支持手动改造，详见 examples。
 
-现已支持主流扩散模型，对于部分 diffusers 模型进行了昇腾硬件亲和的加速改造，模型归档在 [Modelers](https://modelers.cn/models?name=MindIE&page=1&size=16)/[ModelZoo](https://www.hiascend.com/software/modelzoo)，模型列表详见 [List of Supported Models](docs/architecture.md#%E6%A8%A1%E5%9E%8B%E6%94%AF%E6%8C%81%E5%88%97%E8%A1%A8)，也支持手动改造，详见 examples。
 
-
-## 快速开始
+## ⚡️ 快速开始
 
 本章节以 **Wan2.1** 模型为例，展示如何使用 MindIE SD 进行文本生成视频，关于该模型的更多推理内容请参见 [Modelers - MindIE/Wan2.1](https://modelers.cn/models/MindIE/Wan2.1)。
 
 1.  源码编译安装 MindIE SD（镜像 / 软件包安装方式详见 [developer_guide](docs/developer_guide.md)）
+    ```bash	 
+    git clone https://gitcode.com/Ascend/MindIE-SD.git && cd MindIE-SD	 
+    python setup.py bdist_wheel 
+ 
+    cd dist 
+    pip install mindiesd-*.whl 
+    ```
+    
+    **注：** 若 torch 版本为 2.6，则可直接 pip 安装 MindIE SD，无需源码编译。
     ```bash
-    git clone https://gitcode.com/Ascend/MindIE-SD.git && cd MindIE-SD
-    python setup.py bdist_wheel
-
-    cd dist
-    pip install mindiesd-*.whl
+    pip install --trusted-host ascend.devcloud.huaweicloud.com -i https://ascend.devcloud.huaweicloud.com/pypi/simple/ mindiesd
     ```
 
 2.  安装模型所需依赖并执行推理。
@@ -51,7 +55,7 @@
     bash examples/wan/infer_t2v.sh --model_base="/home/{用户名}/Wan2.1-T2V-14B"
     ```
 
-## 加速特性效果展示
+## 🌟 加速特性效果展示
 
 下面以 Wan2.1 模型为例，展示在 Atlas 800I A2 (1\*64G) 机器上单卡和多卡实现不同加速特性的加速效果。
 
@@ -94,7 +98,7 @@
 
 注：\* 号表示最优加速效果
 
-## Paper Citations
+## 📝 Paper Citations
 ```
 @misc{RainFusion2.0@2025,
     title = {RainFusion2.0: Temporal-Spatial Awareness and Hardware-Efficient Block-wise Sparse Attention},
@@ -105,6 +109,6 @@
     }
 ```
 
-## 联系我们
+## 💖 联系我们
 ![](./docs/figures/contact-us.jpg)
 ![](./docs/figures/contact-us-MindIESD.jpg)
