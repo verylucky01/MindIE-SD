@@ -369,3 +369,48 @@ class W8A8MXFP8QuantLinear(W8A8QuantBaseLinear):
         if kwargs.get('use_nz', False):
             weight = torch_npu.npu_format_cast(weight.npu(), 29)
         self.register_buffer("weight", weight, persistent=False)
+
+
+class W4A4MXFP4DualQuantLinear(W8A8QuantBaseLinear):
+    def __init__(self, in_features, out_features, bias=True, weights=None, prefix=None, **kwargs):
+        super().__init__(in_features, out_features, bias, weights, prefix, **kwargs)
+
+        self.is_dynamic = kwargs.get('is_dynamic', True)
+        self._init_dynamic_quant_param(prefix, weights, **kwargs)
+
+    def quant_matmul(self, x):
+        if x.dtype != self.dtype:
+            x = x.to(self.dtype)
+
+        if self.mul_scale is not None:
+            x1, l0_scale, l1_scale = torch_npu.npu_dynamic_dual_level_mx_quant(x * self.mul_scale, smooth_scale=None)
+        else:
+            x1, l0_scale, l1_scale = torch_npu.npu_dynamic_dual_level_mx_quant(x, smooth_scale=None)
+
+        if self.bias.dtype != torch.float32:
+            self.bias = self.bias.to(torch.float32)
+
+        output = torch_npu.npu_dual_level_quant_matmul(x1,
+                                                    self.weight,
+                                                    l0_scale,
+                                                    self.weight_dual_scale,
+                                                    l1_scale,
+                                                    self.weight_scale,
+                                                    bias=self.bias,
+                                                    output_dtype=self.dtype)
+        return output
+
+    def _init_dynamic_quant_param(self, prefix=None, weights=None, **kwargs):
+        weight_scale = get_quant_weight(weights, f'{prefix}.weight_scale')
+        weight_scale = weight_scale.reshape(weight_scale.shape[0], -1, 2)
+        self.register_buffer("weight_scale", weight_scale, persistent=False)
+
+        weight_dual_scale = get_quant_weight(weights, f'{prefix}.weight_dual_scale')
+        weight_dual_scale = weight_dual_scale.squeeze(-1).transpose(0, 1).contiguous()
+        self.register_buffer("weight_dual_scale", weight_dual_scale, persistent=False)
+
+        weight = get_quant_weight(weights, f'{prefix}.weight')
+        weight = torch_npu.npu_dtype_cast(weight.npu(), torch_npu.float4_e2m1fn_x2)
+        if kwargs.get('use_nz', False):
+            weight = torch_npu.npu_format_cast(weight.view(torch.int8), 29, torch.int8)
+        self.register_buffer("weight", weight, persistent=False)
