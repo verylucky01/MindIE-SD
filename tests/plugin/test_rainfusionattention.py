@@ -13,15 +13,14 @@
 import unittest
 import torch
 import torch_npu
+import sys
 import os
 import math
-from utils.utils.precision_compare import data_compare
+sys.path.append('../')
+from tests.utils.utils.precision_compare import data_compare
+torch.ops.load_library("../mindiesd/plugin/libPTAExtensionOPS.so")
 
-if os.environ.get("MINDIE_TEST_MODE", "ALL") != "CPU":
-    torch.ops.load_library("../mindiesd/plugin/libPTAExtensionOPS.so")
 
-
-@unittest.skipIf(os.environ.get("MINDIE_TEST_MODE", "ALL") == "CPU", "Skip NPU-dependent tests when MINDIE_TEST_MODE is CPU.")
 class TestRainFusionAttention(unittest.TestCase):
     def setUp(self):
         self.device = torch.device("npu:0")

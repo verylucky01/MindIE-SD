@@ -10,13 +10,15 @@
 # MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 # See the Mulan PSL v2 for more details.
 import unittest
-import os
+
+import sys
+sys.path.append('../')
+
 import torch
 
 from mindiesd.layers.flash_attn.common import lru_cache_by_attn_param, AttentionParam, attn_cache
 
 
-@unittest.skipIf(os.environ.get("MINDIE_TEST_MODE", "ALL") == "CPU", "Skip NPU-dependent tests when MINDIE_TEST_MODE is CPU.")
 class TestCacheByAttnParam(unittest.TestCase):
     def test_update_cache(self):
         

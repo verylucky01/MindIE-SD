@@ -9,7 +9,6 @@
 # EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 # MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 # See the Mulan PSL v2 for more details.
-import os
 import sys
 from io import StringIO
 import unittest
@@ -20,7 +19,6 @@ sys.path.append('../')
 from mindiesd.utils.logs.logging import logger, MAX_LOG_STRING_LEN
 
 
-@unittest.skipIf(os.environ.get("MINDIE_TEST_MODE", "ALL") == "NPU", "Skip CPU-compatible tests when MINDIE_TEST_MODE is NPU.")
 class TestLog(unittest.TestCase):
     def setUp(self):
         """修改logger中的stream为StringIO,进行日志捕获"""

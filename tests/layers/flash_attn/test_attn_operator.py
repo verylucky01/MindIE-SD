@@ -11,7 +11,10 @@
 # See the Mulan PSL v2 for more details.
 
 import unittest
-import os
+
+import sys
+sys.path.append('../')
+
 import torch
 
 from mindiesd.layers.flash_attn.common import AttentionParam
@@ -42,7 +45,6 @@ class TestOperator(AttentionOperateBase):
         return "bsh"
         
 
-@unittest.skipIf(os.environ.get("MINDIE_TEST_MODE", "ALL") == "CPU", "Skip NPU-dependent tests when MINDIE_TEST_MODE is CPU.")
 class TestAttentionOperator(unittest.TestCase):
     def test_operator_registry_duo(self):
         op = device_duo_op.get_all()

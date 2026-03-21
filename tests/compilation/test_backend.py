@@ -1,4 +1,3 @@
-import os
 import unittest
 import torch
 import time
@@ -49,7 +48,6 @@ class TestModel(torch.nn.Module):
         return torch.add(x_mul, y_mul)  # 匹配源模式
 
 
-@unittest.skipIf(os.environ.get("MINDIE_TEST_MODE", "ALL") == "CPU", "Skip NPU-dependent tests when MINDIE_TEST_MODE is CPU.")
 class TestCompilationCase(unittest.TestCase):
     def test_fused_kernel_perf_and_accuracy(self):
         model = TestModel()
