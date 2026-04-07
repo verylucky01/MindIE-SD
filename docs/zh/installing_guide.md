@@ -25,7 +25,15 @@
 
 3. 使用镜像。
 
-    执行以下命令启动容器，容器启动命令仅供参考，可根据实际情况自行修改容器名称、镜像名称、挂载路径等。
+    启动容器时，下表中配置项一般需要按实际环境自行修改。
+
+    | 配置项 | 命令中的位置 | 说明 |
+    | ------ | ------------ | ---- |
+    | 容器名称 | `--name <container-name>`，以及 `docker exec` 中的 `<container-name>` | 替换为自定义容器名；进入容器时须与启动时 `--name` 一致。 |
+    | 镜像名称 | 命令末尾 `mindie:2.2.RC1-800I-A2-py311-openeuler24.03-lts`（镜像名与标签） | 替换为本地已存在镜像的名称与标签，可通过 `docker images` 查看。 |
+    | 挂载路径 | 各 `-v` 参数中**冒号左侧**的主机路径，例如 `/path-to-weights` | 按实际目录修改；昇腾驱动、固件等路径需与宿主机安装位置一致。 |
+    
+    执行以下命令启动容器（示例命令，请结合上表修改）：
     
     ```bash
     docker run -it -d --net=host --shm-size=1g \
@@ -60,15 +68,17 @@
 
 4. 安装其他环境所需依赖。
 
-   1. 使用模型进行推理前需要安装对应的依赖，根据Modelers/Modelzoo仓上模型README，进行相关依赖的安装。
+   1. 使用模型进行推理前需要安装对应的依赖，根据Modelers/Modelzoo仓上模型README，进行相关依赖的安装。以Wan2.1为例：
 
         ```bash
+        git clone https://modelers.cn/MindIE/Wan2.1.git
+        cd Wan2.1
         pip install -r requirements.txt
         ```
 
    2. 安装gcc、g++。
 
-        若镜像环境中没有gcc、g++，请用户自行安装，并导入头文件路径:
+        若容器环境中没有gcc、g++，请用户自行安装，并导入头文件路径:
         
         ```bash
         yum install gcc g++ -y

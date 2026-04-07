@@ -138,14 +138,7 @@
 
 - 步骤1 编译PyTorch
 
-    1. 编译PyTorch源码。
-
-        ```shell
-        git clone https://github.com/pytorch/pytorch.git --depth=1 -b v2.1.0
-        git submodule sync && git submodule update --init --depth=1 --recursive
-        ```  
-
-    2. 安装openssl-1.1
+    1. 安装openssl-1.1
 
         ```shell
         wget https://www.openssl.org/source/openssl-1.1.1w.tar.gz
@@ -154,6 +147,15 @@
         ./config --prefix=/usr/local/openssl-1.1
         make -j$(nproc)
         sudo make install
+        cd ..
+        ```  
+    
+    2. 获取PyTorch源码（克隆仓库并初始化子模块）。
+
+        ```shell
+        git clone https://github.com/pytorch/pytorch.git --depth=1 -b v2.9.0
+        cd pytorch
+        git submodule sync && git submodule update --init --depth=1 --recursive
         ```  
 
     3. 导出环境变量
@@ -184,8 +186,8 @@
     git config --global http.sslVerify false
     git clone https://github.com/pytorch/gloo.git
     mkdir build && cd build
-    cmake .. -USE_TCP_OPENSSL_LOAD=ON
-    make -j&(nproc)
+    cmake .. -DUSE_TCP_OPENSSL_LOAD=ON
+    make -j$(nproc)
     sudo make install
     export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
     ```  

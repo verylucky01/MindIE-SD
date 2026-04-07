@@ -29,8 +29,8 @@
     完成修改后执行以下命令：
     
     ```bash
-    cd MindIE-SD/
-    python tests/plugin/la_acc_prof.py
+    cd MindIE-SD/tests
+    python plugin/la_acc_prof.py
     ```
 
     运行成功后会在MindIE-SD目录下保存acc_output_results_1.csv和acc_output_results_1.csv两个结果文件，记录了la和fascore的相似度，可查看算子在所需shape下的精度。
