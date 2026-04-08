@@ -1,5 +1,11 @@
 # MindIE SD
 
+## 📢 Latest News
+
+- 12/31/2025: MindIE SD提供稀疏Attention计算能力
+- 12/25/2025：vLLM Omni x MindIE SD 实现 Qwen-Image-Edit-2511 / Qwen-Image-Layered 昇腾原生高性能推理
+- 11/30/2025：MindIE SD 正式宣布开源并面向公众开放！[会议日历](https://meeting.ascend.osinfra.cn/?sig=sig-MindIE-SD)
+
 ## 🚀 简介
 
 **MindIE SD**（Mind Inference Engine Stable Diffusion）是 MindIE 的视图生成推理模型套件，它的目标是为稳定扩散（**Stable Diffusion**, SD）系列大模型提供在昇腾硬件及其软件栈上的端到端推理解决方案。该软件系统内部集成了各功能模块，并对外提供统一的编程接口。
@@ -13,93 +19,32 @@
 
 </div>
 
-## 📢 Latest News
+## 🔍目录结构
 
--   12/31/2025: MindIE SD提供稀疏Attention计算能力
--   12/25/2025：vLLM Omni x MindIE SD 实现 Qwen-Image-Edit-2511 / Qwen-Image-Layered 昇腾原生高性能推理
--   11/30/2025：MindIE SD 正式宣布开源并面向公众开放！[会议日历](https://meeting.ascend.osinfra.cn/?sig=sig-MindIE-SD)
-
+```txt
+- mindiesd
+  |- benchmark          // 提供核心kernel的性能看护和compilation的加速效果看护
+  |- csrc               // 昇腾kernel代码位置
+  |- examples
+    |- service          // 服务化样例：将命令行模式改造成服务化方式。
+    |- mmInfer          // 多模态视图生成的样例
+  |- mindiesd
+    |- cache            // 高阶特性：提供cache能力
+    |- quantization     // 高阶特性：提供量化能力
+    |- parallelism      // 高阶特性：提供自动并行能力
+    |- layer            // 提供基础的pytorch的layer接口
+    |- compilation      // 提供编译能力，基于fx graph实现自动改图（可依旧保持单算子下发）。
+  |- tests              // 测试用例
+  ```
+    
 ## 🚀 架构介绍及关键特性
 
 MindIE SD 架构和关键特性详见[架构介绍](docs/zh/architecture.md)。
 MindIE SD 支持🤗 [魔乐社区](https://modelers.cn/models?name=MindIE&page=1&size=16) 🤗 vLLM Omni 🤗 Cache Dit 等框架/社区，现已支持主流扩散模型，对于部分 diffusers 模型进行了昇腾硬件亲和的加速改造，详见[模型/框架支持情况](docs/zh/features/supported_matrix.md)，模型也支持手动改造，详见 examples。
 
-
-## ⚡️ 快速开始
-
-本章节以 **Wan2.1** 模型为例，展示如何使用 MindIE SD 进行文本生成视频，关于该模型的更多推理内容请参见 [Modelers - MindIE/Wan2.1](https://modelers.cn/models/MindIE/Wan2.1)。
-
-1.  源码编译安装 MindIE SD（镜像 / 软件包安装方式详见 [developer_guide](docs/zh/developer_guide.md)）
-    ```bash	 
-    git clone https://gitcode.com/Ascend/MindIE-SD.git && cd MindIE-SD	 
-    python setup.py bdist_wheel 
- 
-    cd dist 
-    pip install mindiesd-*.whl 
-    ```
-    
-    **注：** 若 torch 版本为 2.6，则可直接 pip 安装 MindIE SD，无需源码编译。
-    ```bash
-    pip install --trusted-host ascend.devcloud.huaweicloud.com -i https://ascend.devcloud.huaweicloud.com/pypi/simple/ mindiesd
-    ```
-
-2.  安装模型所需依赖并执行推理。
-
-    在任意路径下载 Wan2.1 模型仓，并安装所需依赖。在 MindIE SD 代码路径下进行推理。用户可根据需要自行设置权重路径（例：/home/{用户名}/Wan2.1-T2V-14B）和推理脚本中的模型参数，参数解释详情请参见[参数配置](./examples/wan/parameter_config.md)。
-
-    ```bash
-    git clone https://modelers.cn/MindIE/Wan2.1.git && cd Wan2.1
-    pip install -r requirements.txt
-
-    # Wan2.1-T2V-14B 8 卡推理
-    bash examples/wan/infer_t2v.sh --model_base="/home/{用户名}/Wan2.1-T2V-14B"
-    ```
-
-## 🌟 加速特性效果展示
-
-下面以 Wan2.1 模型为例，展示在 Atlas 800I A2 (1\*64G) 机器上单卡和多卡实现不同加速特性的加速效果。
-
-其中Cache表示使用[AttentionCache](./docs/zh/features/cache.md#attentioncache)特性, TP表示使用[Tensor Parallel](./docs/zh/features/parallelism.md#张量并行)特性, FA稀疏表示使用FA稀疏中的[RainFusion特性](./docs/zh/features/sparse_quantization.md#fa稀疏)，CFG表示使用[CFG并行](./docs/zh/features/parallelism.md#cfg并行)特性，Ulysses表示使用[Ulysses并行](./docs/zh/features/parallelism.md#ulysses-sequence-parallel)加速特性，模型生成的视频的H\*W为832\*480, sample_steps为50。
-
-### 单卡加速效果
-
-#### cache 加速效果
-
-| Baseline | + Cache 加速比1.6 | + Cache 加速比2.0 | + Cache 加速比2.4 |
-|:---:|:---:|:---:|:---:|
-| 860.2s | 631.7s 1.36x | 541.8s 1.59x | 516.9s ***1.66x** |
-| ![](./docs/zh/figures/单卡base%20+%20高性能FA算子.gif) | ![](./docs/zh/figures/单卡%20+%20高性能FA算子%20+%20开启attentioncache+加速比为1.6.gif) | ![](./docs/zh/figures/单卡%20+%20高性能FA算子%20+%20开启attentioncache+加速比为2.0.gif) | ![](./docs/zh/figures/单卡%20+%20高性能FA算子%20+%20开启attentioncache+加速比为2.4.gif) |
-
-### 并行策略效果
-
-#### 双卡单个并行策略效果
-
-| 模型 | 卡数 | 并行策略 | 视频输出分辨率 | 算子优化 | cache 算法优化| FA 稀疏 | 50 步 E2E 耗时(s) | 加速比 |
-|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Wan2.1 | 2 | VAE | 832\*480 | √ | √ | √ | 548.8 | 1.02x|
-| Wan2.1 | 2 | TP | 832\*480 | √ | √ | √ | 502.8 | 1.12x|
-| Wan2.1 | 2 | CFG | 832\*480 | √ | √ | √ | 332.6 | 1.69x|
-| Wan2.1 | 2 | Ulysses | 832\*480 | √ | √ | √ | 327.6 | ***1.71x**|
-
-注：\* 号表示最优加速效果
-
-#### 多卡并行策略组合效果
-
-| 模型 | 卡数 | 并行策略 | 视频输出分辨率 | 算子优化 | cache 算法优化| FA 稀疏 | 50 步 E2E 耗时(s) | 加速比 |
-|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Wan2.1 | 4 | TP=4, VAE | 832\*480 | √ | √ | √ | 204.0 | 2.754x|
-| Wan2.1 | 4 | CFG=2, TP=2, VAE | 832\*480 | √ | √ | √ | 175.8 | 3.19x|
-| Wan2.1 | 4 | Ulysses=4, VAE | 832\*480 | √ | √ | √ | 151.1 | 3.71x|
-| Wan2.1 | 4 | CFG=2, Ulysses=2, VAE | 832\*480 | √ | √ | √ | 147.9 | ***3.79x**|
-| Wan2.1 | 8 | TP=8, VAE | 832\*480 | √ | √ | √ | 141.5| 3.96x|
-| Wan2.1 | 8 | CFG=2, TP=4, VAE | 832\*480 | √ | √ | √ | 102.9 | 5.45x|
-| Wan2.1 | 8 | Ulysses=8, VAE | 832\*480 | √ | √ | √ | 78.1 | 7.18x|
-| Wan2.1 | 8 | CFG=2, Ulysses=4, VAE | 832\*480 | √ | √ | √ | 76.4 | ***7.34x**|
-
-注：\* 号表示最优加速效果
-
 ## 📝 Paper Citations
-```
+
+```txt
 @misc{RainFusion2.0@2025,
     title = {RainFusion2.0: Temporal-Spatial Awareness and Hardware-Efficient Block-wise Sparse Attention},
     url = {https://gitcode.com/Ascend/MindIE-SD.git},
@@ -110,5 +55,6 @@ MindIE SD 支持🤗 [魔乐社区](https://modelers.cn/models?name=MindIE&page=
 ```
 
 ## 💖 联系我们
+
 ![](./docs/zh/figures/contact-us.jpg)
 ![](./docs/zh/figures/contact-us-MindIESD.jpg)

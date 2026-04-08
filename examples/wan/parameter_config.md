@@ -1,4 +1,5 @@
 # Parameter Config
+
 本文档介绍Wan2.1模型的权重及参数配置。
 
 ## 模型权重
@@ -39,7 +40,6 @@
 </tr>
 </tbody>
 </table>
-
 
 ## 模型参数
 
@@ -156,7 +156,7 @@
 <td class="cellrowborder" valign="top" width="60.01%" headers="mcps1.2.4.1.3 "><p id="p9317301573"><a name="p9317301573"></a><a name="p9317301573"></a>文本到文本传输转换（Text-To-Text Transfer Transformer, T5）模型是否使用FSDP策略。</p>
 </td>
 </tr>
-<tr id="row11402154312018"><td class="cellrowborder" valign="top" width="21.060000000000002%" headers="mcps1.2.4.1.1 "><p id="p194039438019"><a name="p194039438019"></a><a name="p194039438019"></a>vae_parallel:</p>
+<tr id="row11402154312018"><td class="cellrowborder" valign="top" width="21.060000000000002%" headers="mcps1.2.4.1.1 "><p id="p194039438019"><a name="p194039438019"></a><a name="p194039438019"></a>vae_parallel</p>
 </td>
 <td class="cellrowborder" valign="top" width="18.93%" headers="mcps1.2.4.1.2 "><p id="p24036431804"><a name="p24036431804"></a><a name="p24036431804"></a>使能vae并行策略</p>
 </td>
