@@ -11,6 +11,7 @@
 # See the Mulan PSL v2 for more details.
 
 import os
+import sys
 import functools
 import unittest
 import math
@@ -21,11 +22,11 @@ import torch.nn as nn
 from timm.models.layers import to_2tuple
 from einops import repeat, rearrange
 import torch.nn.functional as F
-
 import torch_npu
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from device import DEVICE_ID
 torch_npu.npu.set_device(DEVICE_ID)
-
 from mindiesd.utils import ModelInitError, ParametersInvalid
 from utils.utils.embedding import RotaryEmbedding, TimestepEmbedder, SizeEmbedder, \
     CombinedTimestepTextProjEmbeddings, PositionEmbedding2D, PatchEmbed, RotaryPositionEmbedding

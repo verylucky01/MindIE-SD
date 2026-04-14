@@ -10,11 +10,14 @@
 # MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 # See the Mulan PSL v2 for more details.
 import os
+import sys
 import unittest
 import torch
 import torch_npu
 import torch.nn as nn
 
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from device import DEVICE_ID
 from utils.utils.precision_compare import data_compare
 from mindiesd import layernorm_scale_shift

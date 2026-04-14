@@ -10,7 +10,10 @@
 # MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 # See the Mulan PSL v2 for more details.
 import os
+import sys
 import unittest
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.utils.norm import PatchGroupNorm3d
 
 

@@ -23,6 +23,7 @@ from mindiesd.quantization.quantize import smooth_quantize_w8a8, smooth_quantize
 from mindiesd.quantization.quantize import weight_quantize, w8a16_quantize, add_fa_quant
 from mindiesd.quantization.quantize import get_cfg_and_weights
 from mindiesd.utils import ParametersInvalid, ConfigError
+from mindiesd.utils.get_platform import NPUDevice, get_npu_device
 
 quantize_module = importlib.import_module("mindiesd.quantization.quantize")
 
@@ -144,6 +145,7 @@ class TestSmoothQuantize(unittest.TestCase):
         self.assertIsInstance(quant_layer, W8A8MXFP8QuantLinear)
         self.assertTrue(is_modified)
     
+    @unittest.skipIf(get_npu_device() != NPUDevice.A5, "Skip unsupported tests when device is not available.")
     def test_smooth_quantize_w4a4_mxfp4_with_linear(self):
         layer = nn.Linear(8, 8)
         cfg = QuantConfig(quant_algo=QuantAlgorithm.W4A4_MXFP4_DYNAMIC)

@@ -10,9 +10,12 @@
 # MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 # See the Mulan PSL v2 for more details.
 import os
+import sys
 import unittest
 import torch
 
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from mindiesd.layers.rope import rotary_position_embedding
 from mindiesd.utils import ParametersInvalid
 from utils.utils.embedding import RotaryPositionEmbedding

@@ -14,6 +14,9 @@ import sys
 import torch
 import torch_npu
 
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 from mindiesd import attention_forward_varlen
 from mindiesd.utils.exception import ParametersInvalid
 from utils.utils.precision_compare import data_compare

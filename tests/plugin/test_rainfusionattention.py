@@ -14,7 +14,10 @@ import unittest
 import torch
 import torch_npu
 import os
+import sys
 import math
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.utils.precision_compare import data_compare
 
 if os.environ.get("MINDIE_TEST_MODE", "ALL") != "CPU":

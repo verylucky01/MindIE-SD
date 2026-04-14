@@ -13,9 +13,11 @@
 import unittest
 from unittest.mock import patch
 import os
+import sys
 import torch
 import torch_npu
-
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from device import DEVICE_ID
 from mindiesd.layers.flash_attn.sparse_flash_attn import sparse_attention
 from utils.utils.precision_compare import data_compare
