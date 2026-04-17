@@ -10,6 +10,7 @@
 # MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 # See the Mulan PSL v2 for more details.
 
-"""Canonical package version."""
 
-__version__ = "2.3.0"
+import os
+
+__version__ = os.environ.get("MINDIE_SD_VERSION_OVERRIDE", "2.3.0").replace("T", "post")

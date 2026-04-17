@@ -32,7 +32,7 @@ Issues = "https://gitcode.com/Ascend/MindIE-SD/issues"
 include-package-data = true
 
 [tool.setuptools.dynamic]
-version = { attr = "mindiesd._version.__version__" }
+version = { attr = "version.__version__" }
 dependencies = { file = ["requirements.txt"] }
 
 [tool.setuptools.packages.find]

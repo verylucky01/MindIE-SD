@@ -23,23 +23,17 @@ from setuptools.command.build_py import build_py as _build_py
 from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
 
 os.environ["SOURCE_DATE_EPOCH"] = "315532800"
-VERSION_ENV = "MINDIE_SD_VERSION_OVERRIDE"
-VERSION_FILE = os.path.join(os.path.abspath(os.path.dirname(__file__)), "mindiesd", "_version.py")
+VERSION_FILE = os.path.join(os.path.abspath(os.path.dirname(__file__)), "version.py")
 
 
 def get_mindiesd_version():
-    version = os.environ.get(VERSION_ENV, None)
-    if version:
-        logging.info(f"MINDIE_SD_VERSION_OVERRIDE is: {version}")
-    else:
-        version_ns = runpy.run_path(VERSION_FILE)
-        version = version_ns.get("__version__")
-        if not version:
-            raise RuntimeError(f"Failed to get version from {VERSION_FILE}")
-        logging.info(f"Repository version is: {version}")
+    version_ns = runpy.run_path(VERSION_FILE)
+    version = version_ns.get("__version__")
+    if not version:
+        raise RuntimeError(f"Failed to get version from {VERSION_FILE}")
 
-    mindiesd_version = version.replace("T", "post")
-    return mindiesd_version
+    logging.info(f"Build version is: {version}")
+    return version
 
 
 def copy_so_files(src_dir, dest_dir):
